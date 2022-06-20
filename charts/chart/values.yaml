@@ -38,6 +38,10 @@ resources:
 # specific reason to change this.
 apiEndpoint: ""
 
+# loginEndpoint is the URL to Firefly's Auth. Leave empty unless you have a
+# specific reason to change this.
+loginEndpoint: ""
+
 # fetchEverything is a boolean value indicating whether to allow Firefly to
 # fetch all Kubernetes resource types
 fetchEverything: true

@@ -12,11 +12,11 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/infralight/k8s-collector/collector"
-	"github.com/infralight/k8s-collector/collector/config"
-	"github.com/infralight/k8s-collector/collector/helm"
-	"github.com/infralight/k8s-collector/collector/k8s"
-	"github.com/infralight/k8s-collector/collector/k8stypes"
+	"github.com/gofireflyio/k8s-collector/collector"
+	"github.com/gofireflyio/k8s-collector/collector/config"
+	"github.com/gofireflyio/k8s-collector/collector/helm"
+	"github.com/gofireflyio/k8s-collector/collector/k8s"
+	"github.com/gofireflyio/k8s-collector/collector/k8stypes"
 )
 
 func main() {
