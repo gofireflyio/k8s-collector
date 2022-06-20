@@ -2,7 +2,7 @@ package k8stree
 
 import (
 	"fmt"
-	"github.com/infralight/k8s-collector/collector/k8s"
+	"github.com/gofireflyio/k8s-collector/collector/k8s"
 	"github.com/thoas/go-funk"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"

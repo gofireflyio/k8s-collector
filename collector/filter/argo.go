@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/infralight/k8s-collector/collector/k8s"
+	"github.com/gofireflyio/k8s-collector/collector/k8s"
 	"github.com/rs/zerolog/log"
 	"github.com/thoas/go-funk"
 	"helm.sh/helm/v3/pkg/chart"

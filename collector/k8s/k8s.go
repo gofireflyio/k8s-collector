@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	"github.com/infralight/k8s-collector/collector/config"
+	"github.com/gofireflyio/k8s-collector/collector/config"
 )
 
 // Collector is a struct implementing the DataCollector interface. It wraps a

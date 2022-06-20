@@ -1,4 +1,4 @@
-module github.com/infralight/k8s-collector
+module github.com/gofireflyio/k8s-collector
 
 go 1.16
 

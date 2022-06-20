@@ -9,7 +9,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
 
-	"github.com/infralight/k8s-collector/collector/config"
+	"github.com/gofireflyio/k8s-collector/collector/config"
 )
 
 // Collector is a struct implementing the DataCollector interface. It wraps a

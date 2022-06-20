@@ -6,6 +6,9 @@ data:
 {{ if .Values.apiEndpoint }}
   endpoint: {{ quote .Values.apiEndpoint }}
 {{ end }}
+{{ if .Values.loginEndpoint }}
+  loginEndpoint: {{ quote .Values.loginEndpoint }}
+{{ end }}
   collector.watchNamespace: default
   collector.ignoreNamespaces: |
     kube-system

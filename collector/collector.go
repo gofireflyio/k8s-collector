@@ -1,25 +1,25 @@
 package collector
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
-	"os"
-	"regexp"
+    "context"
+    "encoding/json"
+    "fmt"
+    "io"
+    "net/http"
+    "os"
+    "regexp"
 
-	"github.com/ido50/requests"
-	"github.com/infralight/k8s-collector/collector/config"
-	"github.com/infralight/k8s-collector/collector/filter"
-	"github.com/infralight/k8s-collector/collector/k8stree"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"golang.org/x/sync/errgroup"
-	"gopkg.in/mgo.v2/bson"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
+    "github.com/gofireflyio/k8s-collector/collector/config"
+    "github.com/gofireflyio/k8s-collector/collector/filter"
+    "github.com/gofireflyio/k8s-collector/collector/k8stree"
+    "github.com/ido50/requests"
+    "github.com/rs/zerolog"
+    "github.com/rs/zerolog/log"
+    "golang.org/x/sync/errgroup"
+    "gopkg.in/mgo.v2/bson"
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+    "k8s.io/client-go/kubernetes"
+    "k8s.io/client-go/rest"
 )
 
 const (
