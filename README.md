@@ -119,6 +119,18 @@ Note that "secrets" permission is required in order for the collector to collect
 information about Helm v3 releases install directly via `helm`.
 
 ## Helm
+In order to migrate from our old release to the updated one follow the instructions (either auto or manual)
+### Auto
+#### Prerequisites
+This script requires the **jq** package. you can download it using your favorite PM (brew/apt etc.).
+To check if you have 'jq' installed, type the following command in your terminal:
+   ```sh
+   jq --version
+   ```
+#### Migration
+Run the [migration script](scripts/helm_migration.sh).
+Please Update the **FIREFLY_COLLECTOR_NAMESPACE** and the **HELM_RELEASE_NAME** if it's not the default values.
+### Manual
 In order to migrate from our old release to the updated one please follow the following steps:
 1. run the following command and save the values of **accessKey, secretKey, clusterId**
     ```sh
