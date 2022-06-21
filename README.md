@@ -1,4 +1,6 @@
-# ![Infralight Logo](project-logo.png)
+<p align="center">
+  <img src="https://github.com/gofireflyio/k8s-collector/blob/main/project-logo.png?raw=true" alt="Firefly's image"/>
+</p>
 
 **Infralight Kubernetes Collector**
 
@@ -7,6 +9,7 @@
 * [Overview](#overview)
 * [Quick Start](#quick-start)
 * [Configuration](#configuration)
+* [Updating the helm release](#helm)
 * [Development](#development)
     * [Requirements](#requirements)
     * [Server-Side Notes](#server-side-notes)
@@ -114,6 +117,21 @@ helm install infralight infralight/infralight-k8s-collector \
 
 Note that "secrets" permission is required in order for the collector to collect
 information about Helm v3 releases install directly via `helm`.
+
+## Helm
+In order to migrate from our old release to the updated one please follow the following steps:
+1. run the following command and save the values of **accessKey, secretKey, clusterId**
+    ```sh
+    helm -n firefly get values infralight
+    ```
+2. run:
+    ```sh
+    helm uninstall infralight -n firefly && helm repo remove infralight
+    ```
+3. run the next command. **Please fill with the variables from step 1**
+   ```sh
+   helm repo add firefly https://gofireflyio.github.io/k8s-collector && helm install firefly firefly/firefly-k8s-collector --set accessKey=<enter your secret key> --set secretKey=<enter your access key> --set clusterId=<enter your cluster id> --set schedule="*/15 * * * *"  --namespace=firefly --create-namespace
+    ```
 
 ## Development
 
