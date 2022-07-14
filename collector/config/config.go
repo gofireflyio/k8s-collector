@@ -147,14 +147,8 @@ type Config struct {
 	// MongoMaxRetries is an integer for max retries for sending data to the server.
 	MongoMaxRetries int
 
-	// PageSleepDuration is an integer for max time to sleep when sending data to the server
-	PageSleepDuration int
-
 	// PageTimeoutDuration is a duration for timeout for each request.
 	PageTimeoutDuration time.Duration
-
-	// PageSleepEnabled whether we should sleep between each page
-	PageSleepEnabled bool
 }
 
 // LoadConfig creates a new configuration object. A logger object, a file-system
