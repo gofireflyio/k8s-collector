@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 	"testing/fstest"
+	"time"
 
 	"github.com/jgroeneveld/trial/assert"
 	"github.com/rs/zerolog"
@@ -70,8 +71,11 @@ func TestLoadConfig(t *testing.T) {
 					"applications":           true,
 				},
 				OverrideUniqueClusterId: false,
-				PageSize:                500,
-				MaxGoRoutines:           50,
+				PageSize:                1200,
+				MaxGoRoutines:           10,
+				MongoMaxRetries:         3,
+				MongoMaxGoRoutines:      5,
+				PageTimeoutDuration:     time.Second * 900,
 			},
 		},
 	}
