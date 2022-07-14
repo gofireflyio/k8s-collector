@@ -225,6 +225,8 @@ func (f *Collector) authenticate() (err error) {
 	}
 
 	f.client = requests.NewClient(f.conf.Endpoint).
+		Timeout(f.conf.PageTimeoutDuration).
+		RetryLimit(uint8(f.conf.MongoMaxRetries)).
 		Header("Authorization", fmt.Sprintf("Bearer %s", credentials.Token)).
 		CompressWith(requests.CompressionAlgorithmGzip).
 		ErrorHandler(func(httpStatus int, contentType string, body io.Reader) error {
@@ -287,7 +289,7 @@ func (f *Collector) sendK8sObjects(fetchingId string, data []interface{}) error 
 		return nil
 	}
 	f.conf.Log.Debug().
-		Int("MessageSize", len(data)).
+		Int("TotalObjects", len(data)).
 		Msg("Sending collected data to Infralight")
 
 	totalBytes := 0
@@ -331,6 +333,7 @@ func (f *Collector) sendK8sObjects(fetchingId string, data []interface{}) error 
 					fmt.Sprintf("/integrations/k8s/%s/fetching/objects", f.clusterID),
 				).
 				ExpectedStatus(http.StatusNoContent).
+				RetryLimit(uint8(f.conf.MongoMaxRetries)).
 				JSONBody(body).
 				Run()
 			if err != nil {
@@ -384,12 +387,13 @@ func (f *Collector) sendHelmReleases(
 	}
 	f.conf.Log.Debug().
 		Str("FetchingId", fetchingId).
-		Int("MessageSize", len(data)).
+		Int("HelmReleases", len(data)).
 		Msg("Sending collected helm releases to Infralight")
 
 	totalBytes := 0
 	var chunks [][]interface{}
 	var objects []interface{}
+
 	for idx, obj := range data {
 		bytes, _ := json.Marshal(obj)
 		totalBytes += len(bytes)
@@ -402,7 +406,7 @@ func (f *Collector) sendHelmReleases(
 		}
 	}
 
-	concurrentGoroutines := make(chan struct{}, f.conf.MaxGoRoutines)
+	concurrentGoroutines := make(chan struct{}, f.conf.MongoMaxGoRoutines)
 	g, _ := errgroup.WithContext(context.Background())
 	for _, chunkObjects := range chunks {
 		concurrentGoroutines <- struct{}{}
@@ -420,6 +424,8 @@ func (f *Collector) sendHelmReleases(
 				NewRequest("POST", fmt.Sprintf("/integrations/k8s/%s/fetching/helm", f.clusterID)).
 				ExpectedStatus(http.StatusNoContent).
 				JSONBody(body).
+				Timeout(f.conf.PageTimeoutDuration).
+				RetryLimit(uint8(f.conf.MongoMaxRetries)).
 				Run()
 			if err != nil {
 				log.Err(err).Str("ClusterId", f.clusterID).Str("FetchingId", fetchingId).
@@ -452,7 +458,8 @@ func (f *Collector) sendK8sTree(fetchingId string, data []k8stree.ObjectsTree) e
 		return nil
 	}
 	f.conf.Log.Debug().
-		Int("MessageSize", len(data)).
+		Str("FetchingId", fetchingId).
+		Int("Trees", len(data)).
 		Msg("Sending collected data to Infralight")
 
 	totalBytes := 0
@@ -494,7 +501,7 @@ func (f *Collector) sendK8sTree(fetchingId string, data []k8stree.ObjectsTree) e
 		}
 	}
 
-	concurrentGoroutines := make(chan struct{}, f.conf.MaxGoRoutines)
+	concurrentGoroutines := make(chan struct{}, f.conf.MongoMaxGoRoutines)
 	g, _ := errgroup.WithContext(context.Background())
 	for _, chunkObjectsTrees := range chunks {
 		concurrentGoroutines <- struct{}{}
@@ -511,6 +518,8 @@ func (f *Collector) sendK8sTree(fetchingId string, data []k8stree.ObjectsTree) e
 				NewRequest("POST", fmt.Sprintf("/integrations/k8s/%s/fetching/tree", f.clusterID)).
 				ExpectedStatus(http.StatusNoContent).
 				JSONBody(body).
+				Timeout(f.conf.PageTimeoutDuration).
+				RetryLimit(uint8(f.conf.MongoMaxRetries)).
 				Run()
 			if err != nil {
 				log.Err(err).Str("ClusterId", f.clusterID).Str("FetchingId", fetchingId).

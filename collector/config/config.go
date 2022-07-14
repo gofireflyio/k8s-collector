@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog"
 )
@@ -116,8 +117,8 @@ type Config struct {
 	// Endpoint is the URL to the Infralight App Server
 	Endpoint string
 
-    // LoginEndpoint is the URL to login Infralight Service
-    LoginEndpoint string
+	// LoginEndpoint is the URL to login Infralight Service
+	LoginEndpoint string
 
 	// Namespace is the Kubernets namespace we're collecting data from (if empty,
 	// all namespaces are collected)
@@ -139,6 +140,21 @@ type Config struct {
 
 	// MaxGoRoutines is an integer for max goroutines running at ones sending the chunks.
 	MaxGoRoutines int
+
+	// MongoMaxGoRoutines is an integer for max goroutines running at ones sending the chunks.
+	MongoMaxGoRoutines int
+
+	// MongoMaxRetries is an integer for max retries for sending data to the server.
+	MongoMaxRetries int
+
+	// PageSleepDuration is an integer for max time to sleep when sending data to the server
+	PageSleepDuration int
+
+	// PageTimeoutDuration is a duration for timeout for each request.
+	PageTimeoutDuration time.Duration
+
+	// PageSleepEnabled whether we should sleep between each page
+	PageSleepEnabled bool
 }
 
 // LoadConfig creates a new configuration object. A logger object, a file-system
@@ -187,13 +203,13 @@ func LoadConfig(
 		conf.Endpoint = DefaultFireflyAPI
 	}
 
-    conf.LoginEndpoint = strings.TrimSuffix(
-        parseOne(conf.etcConfig("loginEndpoint"), ""),
-        "/",
-    )
-    if conf.LoginEndpoint == "" {
-        conf.LoginEndpoint = DefaultFireflyLoginAPI
-    }
+	conf.LoginEndpoint = strings.TrimSuffix(
+		parseOne(conf.etcConfig("loginEndpoint"), ""),
+		"/",
+	)
+	if conf.LoginEndpoint == "" {
+		conf.LoginEndpoint = DefaultFireflyLoginAPI
+	}
 
 	conf.AccessKey = accessKey
 	conf.SecretKey = secretKey
@@ -210,8 +226,11 @@ func LoadConfig(
 		conf.etcConfig("collector.OverrideUniqueClusterId"),
 		false,
 	)
-	conf.PageSize = parseInt(conf.etcConfig("collector.PageSize"), 500)
-	conf.MaxGoRoutines = parseInt(conf.etcConfig("collector.MaxGoRoutines"), 50)
+	conf.PageSize = parseInt(conf.etcConfig("collector.PageSize"), 1200)
+	conf.MaxGoRoutines = parseInt(conf.etcConfig("collector.MaxGoRoutines"), 10)
+	conf.MongoMaxGoRoutines = parseInt(conf.etcConfig("collector.MongoMaxGoRoutines"), 5)
+	conf.MongoMaxRetries = parseInt(conf.etcConfig("collector.MongoMaxRetries"), 3)
+	conf.PageTimeoutDuration = time.Duration(int64(time.Second) * int64(parseInt(conf.etcConfig("collector.PageTimeoutDuration"), 300)) * int64(conf.MongoMaxRetries))
 
 	return conf, nil
 }
