@@ -1,4 +1,4 @@
-FROM golangci/golangci-lint:v1.38.0-alpine AS builder
+FROM golangci/golangci-lint:v1.47.1-alpine AS builder
 RUN apk --update add ca-certificates
 WORKDIR /go/src/app
 COPY . .
