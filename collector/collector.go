@@ -3,12 +3,12 @@ package collector
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"regexp"
-	"strings"
 
 	"github.com/gofireflyio/k8s-collector/collector/config"
 	"github.com/gofireflyio/k8s-collector/collector/filter"
@@ -24,8 +24,11 @@ import (
 )
 
 const (
-	MaxItemSize   = 1024 * 1500
-	TooEarlyError = "server is unavailale for collecting kubernetes assets now"
+	MaxItemSize = 1024 * 1500
+)
+
+var (
+	TooEarlyError = errors.New("server is unavailable for collecting kubernetes assets now")
 )
 
 // DataCollector is an interface for objects that collect data from K8s-related
@@ -134,7 +137,7 @@ func (f *Collector) Run(ctx context.Context) (err error) {
 
 		fetchingId, err = f.startNewFetching(uniqueClusterId)
 		if err != nil {
-			if strings.Contains(err.Error(), TooEarlyError) {
+			if errors.Is(err, TooEarlyError) {
 				f.log.Info().Msgf("Skipping this collection cycle, due to a remote error, error: %s", err.Error())
 				return nil
 			}
@@ -230,14 +233,14 @@ func (f *Collector) authenticate() (err error) {
 		return err
 	}
 
-	f.client = requests.NewClient(f.conf.Endpoint).
+	f.client = requests.NewClient("http://localhost:7500").
 		Timeout(f.conf.PageTimeoutDuration).
 		RetryLimit(uint8(f.conf.MongoMaxRetries)).
 		Header("Authorization", fmt.Sprintf("Bearer %s", credentials.Token)).
 		CompressWith(requests.CompressionAlgorithmGzip).
 		ErrorHandler(func(httpStatus int, contentType string, body io.Reader) error {
 			if httpStatus == http.StatusTooEarly {
-				return fmt.Errorf(TooEarlyError)
+				return TooEarlyError
 			}
 			content, err := io.ReadAll(body)
 			if err != nil {
