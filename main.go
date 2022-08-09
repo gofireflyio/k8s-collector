@@ -25,6 +25,8 @@ import (
 	"github.com/gofireflyio/k8s-collector/collector/k8stypes"
 )
 
+const defaultNamespace = "firefly"
+
 func main() {
 	// Parse command line flags
 	ctx := context.Background()
@@ -67,12 +69,7 @@ func main() {
 			Msg("Failed loading Kubernetes configuration")
 	}
 
-	var namespace string
-	if len(*external) > 0 {
-		namespace = "firefly"
-	} else {
-		namespace = Namespace()
-	}
+	namespace := Namespace()
 
 	// Load the Kubernetes collector
 	k8sCollector, err := k8s.DefaultConfiguration(apiConfig)
@@ -113,7 +110,7 @@ func main() {
 				Msg("Failed to list kubernetes jobs in namespace")
 		}
 		running := funk.Filter(jobs.Items, func(job v1.Job) bool {
-			return job.Status.Active == int32(1)
+			return job.Status.Active == int32(1) && strings.Contains(job.Name, defaultNamespace)
 		}).([]v1.Job)
 		if len(running) > 1 {
 			logger.Warn().
@@ -186,5 +183,5 @@ func Namespace() string {
 		}
 	}
 
-	return "firefly"
+	return defaultNamespace
 }
