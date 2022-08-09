@@ -11,6 +11,7 @@ require (
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 	helm.sh/helm/v3 v3.9.1
+	k8s.io/api v0.24.3
 	k8s.io/apimachinery v0.24.3
 	k8s.io/client-go v0.24.3
 )
