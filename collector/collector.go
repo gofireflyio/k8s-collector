@@ -233,7 +233,7 @@ func (f *Collector) authenticate() (err error) {
 		return err
 	}
 
-	f.client = requests.NewClient("http://localhost:7500").
+	f.client = requests.NewClient(f.conf.Endpoint).
 		Timeout(f.conf.PageTimeoutDuration).
 		RetryLimit(uint8(f.conf.MongoMaxRetries)).
 		Header("Authorization", fmt.Sprintf("Bearer %s", credentials.Token)).
