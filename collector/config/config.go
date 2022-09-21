@@ -83,6 +83,15 @@ var (
 		"services/status",
 		"statefulsets",
 		"storageclasses",
+		"poddisruptionbudgets",
+		"podsecuritypolicies",
+		"ingressclasses",
+		"volumeattachments",
+		"csidrivers",
+		"validatingwebhookconfigurations",
+		"mutatingwebhookconfigurations",
+		"runtimeclasses",
+		"horizontalpodautoscalers",
 	}
 )
 
