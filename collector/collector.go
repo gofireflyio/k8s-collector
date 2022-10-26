@@ -59,6 +59,8 @@ type Collector struct {
 	// provided externally)
 	clusterID string
 
+	integrationId string
+
 	// Cluster configuration
 	clusterConfig *rest.Config
 
@@ -124,7 +126,7 @@ func (f *Collector) Run(ctx context.Context) (err error) {
 		f.log.Info().Msg("Authenticated to Infralight App Server successfully")
 	}
 
-	var uniqueClusterId, fetchingId string
+	var uniqueClusterId, fetchingId, integrationId string
 
 	if f.conf.DryRun {
 		uniqueClusterId = "dry-run-cluster-id"
@@ -135,7 +137,7 @@ func (f *Collector) Run(ctx context.Context) (err error) {
 			return fmt.Errorf("failed finding Kubernetes unique cluster ID: %w", err)
 		}
 
-		fetchingId, err = f.startNewFetching(uniqueClusterId)
+		fetchingId, integrationId, err = f.startNewFetching(uniqueClusterId)
 		if err != nil {
 			if errors.Is(err, TooEarlyError) {
 				f.log.Info().Msgf("Skipping this collection cycle, due to a remote error, error: %s", err.Error())
@@ -145,8 +147,11 @@ func (f *Collector) Run(ctx context.Context) (err error) {
 		}
 	}
 
+	f.integrationId = integrationId
+
 	log := f.log.With().
 		Str("fetchingId", fetchingId).
+		Str("integrationId", integrationId).
 		Str("uniqueClusterId", uniqueClusterId).
 		Logger()
 
@@ -267,18 +272,33 @@ func (f *Collector) getUniqueClusterId(ctx context.Context) (clusterId string, e
 	return string(kubeSystemNs.GetObjectMeta().GetUID()), nil
 }
 
-func (f *Collector) startNewFetching(clusterUniqueId string) (fetchingId string, err error) {
+func (f *Collector) startNewFetching(clusterUniqueId string) (fetchingId, integrationId string, err error) {
 	fetchingId = bson.NewObjectId().Hex()
 	req := f.client.
-		NewRequest("HEAD", fmt.Sprintf("/integrations/k8s/%s/fetching", f.clusterID)).
+		NewRequest("GET", fmt.Sprintf("/integrations/k8s/%s/fetching", f.clusterID)).
 		QueryParam("clusterUniqueId", clusterUniqueId).
 		QueryParam("fetchingId", fetchingId).
-		ExpectedStatus(http.StatusNoContent)
+		QueryParam("getIntegrationId", "true").
+		ExpectedStatus(http.StatusOK).
+		Into(&integrationId).
+		ErrorHandler(func(httpStatus int, contentType string, body io.Reader) error {
+			if httpStatus == http.StatusNoContent {
+				// old version returns 204
+				return nil
+			}
+			content, err := io.ReadAll(body)
+			if err != nil {
+				return fmt.Errorf("server returned unexpected status %d", httpStatus)
+			}
+
+			return fmt.Errorf("server returned %d: %q", httpStatus, content)
+		})
 	if f.conf.OverrideUniqueClusterId {
 		req.QueryParam("overrideUniqueClusterId", "1")
 	}
 	err = req.Run()
-	return fetchingId, err
+
+	return fetchingId, integrationId, err
 }
 
 func (f *Collector) send(data map[string]interface{}) error {
@@ -344,6 +364,7 @@ func (f *Collector) sendK8sObjects(fetchingId string, data []interface{}) error 
 					"POST",
 					fmt.Sprintf("/integrations/k8s/%s/fetching/objects", f.clusterID),
 				).
+				QueryParam("integrationId", f.integrationId).
 				ExpectedStatus(http.StatusNoContent).
 				RetryLimit(uint8(f.conf.MongoMaxRetries)).
 				JSONBody(body).
@@ -364,8 +385,15 @@ func (f *Collector) sendK8sObjects(fetchingId string, data []interface{}) error 
 		return err
 	}
 
+	log.Info().
+		Str("ClusterId", f.clusterID).
+		Str("FetchingId", fetchingId).
+		Str("IntegrationId", f.integrationId).
+		Msg("Sending LOCK request")
+
 	err := f.client.
 		NewRequest("PATCH", fmt.Sprintf("/integrations/k8s/%s/fetching", f.clusterID)).
+		QueryParam("integrationId", f.integrationId).
 		ExpectedStatus(http.StatusNoContent).
 		JSONBody(map[string]interface{}{
 			"fetchingId": fetchingId,
@@ -376,12 +404,14 @@ func (f *Collector) sendK8sObjects(fetchingId string, data []interface{}) error 
 		log.Err(err).
 			Str("ClusterId", f.clusterID).
 			Str("FetchingId", fetchingId).
+			Str("IntegrationId", f.integrationId).
 			Msg("Error sending LOCK")
 		return nil
 	}
 	log.Info().
 		Str("ClusterId", f.clusterID).
 		Str("FetchingId", fetchingId).
+		Str("IntegrationId", f.integrationId).
 		Msg("Sent LOCK successfully")
 	return nil
 }
@@ -434,6 +464,7 @@ func (f *Collector) sendHelmReleases(
 			body["k8sTypes"] = types
 			err := f.client.
 				NewRequest("POST", fmt.Sprintf("/integrations/k8s/%s/fetching/helm", f.clusterID)).
+				QueryParam("integrationId", f.integrationId).
 				ExpectedStatus(http.StatusNoContent).
 				JSONBody(body).
 				Timeout(f.conf.PageTimeoutDuration).
@@ -528,6 +559,7 @@ func (f *Collector) sendK8sTree(fetchingId string, data []k8stree.ObjectsTree) e
 			body["k8sTrees"] = routineObjects
 			err := f.client.
 				NewRequest("POST", fmt.Sprintf("/integrations/k8s/%s/fetching/tree", f.clusterID)).
+				QueryParam("integrationId", f.integrationId).
 				ExpectedStatus(http.StatusNoContent).
 				JSONBody(body).
 				Timeout(f.conf.PageTimeoutDuration).
