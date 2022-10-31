@@ -28,7 +28,9 @@ const (
 )
 
 var (
-	TooEarlyError = errors.New("server is unavailable for collecting kubernetes assets now")
+	TooEarlyError            = errors.New("server is unavailable for collecting kubernetes assets now")
+	FetchingIsDisabled       = errors.New("cannot proceed with asset collection due to a suspension of the integration.\nPlease contact the Firefly support in order to restore your integration.")
+	ClusterUniqueIdDuplicate = errors.New("cannot proceed with asset collection due to a reuse of another cluster configuration.\nPlease contact the Firefly support in order to repair your integration.")
 )
 
 // DataCollector is an interface for objects that collect data from K8s-related
@@ -141,6 +143,12 @@ func (f *Collector) Run(ctx context.Context) (err error) {
 		if err != nil {
 			if errors.Is(err, TooEarlyError) {
 				f.log.Info().Msgf("Skipping this collection cycle, due to a remote error, error: %s", err.Error())
+				return nil
+			} else if errors.Is(err, FetchingIsDisabled) {
+				f.log.Info().Msgf("%s", err.Error())
+				return nil
+			} else if errors.Is(err, ClusterUniqueIdDuplicate) {
+				f.log.Info().Msgf("%s", err.Error())
 				return nil
 			}
 			return fmt.Errorf("failed starting new fetching with Infralight API: %w", err)
@@ -285,6 +293,13 @@ func (f *Collector) startNewFetching(clusterUniqueId string) (fetchingId, integr
 			if httpStatus == http.StatusNoContent {
 				// old version returns 204
 				return nil
+			}
+			if httpStatus == http.StatusPaymentRequired {
+				// This kubernetes integration is suspended
+				return FetchingIsDisabled
+			} else if httpStatus == http.StatusConflict {
+				// This kubernetes integration is suspended
+				return ClusterUniqueIdDuplicate
 			}
 			content, err := io.ReadAll(body)
 			if err != nil {
