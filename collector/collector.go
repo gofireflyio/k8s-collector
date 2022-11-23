@@ -290,6 +290,9 @@ func (f *Collector) startNewFetching(clusterUniqueId string) (fetchingId, integr
 		ExpectedStatus(http.StatusOK).
 		Into(&integrationId).
 		ErrorHandler(func(httpStatus int, contentType string, body io.Reader) error {
+			if httpStatus == http.StatusTooEarly {
+				return TooEarlyError
+			}
 			if httpStatus == http.StatusNoContent {
 				// old version returns 204
 				return nil
