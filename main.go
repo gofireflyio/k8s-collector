@@ -25,7 +25,11 @@ import (
 	"github.com/gofireflyio/k8s-collector/collector/k8stypes"
 )
 
-const defaultNamespace = "firefly"
+const (
+	defaultNamespace           = "firefly"
+	defaultFireflyPodPrefix    = "firefly-cronjob"
+	defaultInfralightPodPrefix = "infralight-cronjob"
+)
 
 func main() {
 	// Parse command line flags
@@ -110,7 +114,8 @@ func main() {
 				Msg("Failed to list kubernetes jobs in namespace")
 		}
 		running := funk.Filter(jobs.Items, func(job v1.Job) bool {
-			return job.Status.Active == int32(1) && strings.Contains(job.Name, defaultNamespace)
+			return job.Status.Active == int32(1) && strings.Contains(job.Name, defaultNamespace) &&
+				(strings.HasPrefix(job.Name, defaultFireflyPodPrefix) || strings.HasPrefix(job.Name, defaultInfralightPodPrefix))
 		}).([]v1.Job)
 		if len(running) > 1 {
 			logger.Warn().
