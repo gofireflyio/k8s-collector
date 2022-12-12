@@ -2,7 +2,7 @@
   <img src="https://github.com/gofireflyio/k8s-collector/blob/main/project-logo.png?raw=true" alt="Firefly's image"/>
 </p>
 
-**Infralight Kubernetes Collector**
+**Firefly Kubernetes Collector**
 
 <!-- vim-markdown-toc GFM -->
 
