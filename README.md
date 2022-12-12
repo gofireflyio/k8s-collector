@@ -23,8 +23,8 @@
 
 ## Overview
 
-This repository contains Infralight's Kubernetes Collector, which collects
-information from a customer's Kubernetes cluster and sends it to the Infralight
+This repository contains Firefly's Kubernetes Collector, which collects
+information from a customer's Kubernetes cluster and sends it to the Firefly
 SaaS. This means it is an on-premises component.
 
 The collector is implemented in the [Go programming language](https://golang.org/) and packaged as an
@@ -39,26 +39,26 @@ given time without having to restart or add triggering capabilities to a
 Kubernetes [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/).
 
 The collector collects various objects from the Kubernetes cluster and sends them
-as-is to Infralight. There is a default list of resource types the collector
+as-is to Firefly. There is a default list of resource types the collector
 fetches, to which more types can be added (or removed) via configuration.
 
 ## Quick Start
 
-Infralight's Kubernetes Collector requires:
+Firefly's Kubernetes Collector requires:
 
 - [Kubernetes](https://kubernetes.io/) v1.15+
 - [Helm](https://helm.sh/) v3.5.0+
 
 To start using the collector, follow these simple steps:
 
-1. Use the Kubernetes Integration wizard in the Infralight dashboard to create
+1. Use the Kubernetes Integration wizard in the Firefly dashboard to create
    an access keypair for a Kubernetes Cluster.
 2. Install the collector on the cluster using [Helm](https://helm.sh/), with the
    data returned from the wizard:
 
    ```sh
-   helm repo add infralight https://infralight.github.io/k8s-collector
-   helm install infralight infralight/infralight-k8s-collector \
+   helm repo add firefly https://gofireflyio.github.io/k8s-collector
+   helm install firefly firefly/firefly-k8s-collector \
        --set accessKey=<access_key> \
        --set secretKey=<secret_key> \
        --set clusterId=<cluster_id>
@@ -70,7 +70,7 @@ and employs a [multi-stage build](https://docs.docker.com/develop/develop-images
 [statically-linked binary](https://en.wikipedia.org/wiki/Static_library). The resulting image does not use any base layer,
 thus keeping its size as small as possible and improving security.
 
-The image is named `infralightio/k8s-collector`.
+The image is named `gofireflyio/k8s-collector`.
 
 ## Configuration
 
@@ -89,8 +89,8 @@ The chart provides this cluster ID to the collector via the `CLUSTER_ID` environ
 variable. The cluster ID must only contain lowercase alphanumeric characters,
 dashes and underscore (spaces are not allowed).
 
-The collector must also be configured with an Infralight-provided access and secret
-keys in order to be able to send data to Infralight. These keys are stored by the
+The collector must also be configured with an Firefly-provided access and secret
+keys in order to be able to send data to Firefly. These keys are stored by the
 chart as Kubernetes Secrets, and provided to the collector via the
 `INFRALIGHT_ACCESS_KEY` and `INFRALIGHT_SECRET_KEY` environment variables,
 respectively.
@@ -107,7 +107,7 @@ permission to do so. You can remove or add resource types to the list by
 providing the `addTypes` and `removeTypes` values, which accept lists:
 
 ```sh
-helm install infralight infralight/infralight-k8s-collector \
+helm install firefly firefly/firefly-k8s-collector \
     --set accessKey=<access_key> \
     --set secretKey=<secret_key> \
     --set clusterId=<cluster_id> \
@@ -134,11 +134,11 @@ Please Update the **FIREFLY_COLLECTOR_NAMESPACE** and the **HELM_RELEASE_NAME** 
 In order to migrate from our old release to the updated one please follow the following steps:
 1. run the following command and save the values of **accessKey, secretKey, clusterId**
     ```sh
-    helm -n firefly get values infralight
+    helm -n firefly get values firefly
     ```
 2. run:
     ```sh
-    helm uninstall infralight -n firefly && helm repo remove infralight
+    helm uninstall firefly -n firefly && helm repo remove firefly
     ```
 3. run the next command. **Please fill with the variables from step 1**
    ```sh
@@ -162,7 +162,7 @@ use `minikube` for local development.
 
 ### Server-Side Notes
 
-The collector sends the collected objects to the Infralight endpoint serialized
+The collector sends the collected objects to the Firefly endpoint serialized
 via JSON. Requests will be compressed using the gzip algorithm, unless
 compression fails, in which case no compression will be used. The server MUST
 inspect the contents of the `Content-Encoding` request header to check whether
@@ -184,7 +184,7 @@ The format of object types themselves is generally consistent, and is
 documented [here](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#types-kinds).
 See [this](https://pkg.go.dev/k8s.io/api/core/v1#Pod) for an example of the structure of an object of type Pod.
 
-When a request is handled by the Infralight endpoint, it is expected to return
+When a request is handled by the Firefly endpoint, it is expected to return
 a [204 No Content](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/204) response with no body, unless an error has occurred.
 
 ### Quick Start
@@ -202,11 +202,11 @@ a [204 No Content](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/204)
    ```
 4. Build the collector's Docker image:
    ```sh
-   docker build -t infralightio/k8s-collector:<appVersion in Chart.yaml> .
+   docker build -t gofireflyio/k8s-collector:<appVersion in Chart.yaml> .
    ```
 5. Install the collector via Helm (from the project's root directory):
    ```sh
-   helm install infralight ./charts/chart \
+   helm install firefly ./charts/chart \
        --set accessKey=<access_key> \
        --set secretKey=<secret_key> \
        --set clusterId=<cluster_id>
@@ -233,7 +233,7 @@ a [204 No Content](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/204)
    ```
 8. Cleanup:
    ```sh
-   helm uninstall infralight
+   helm uninstall firefly
    eval $(minikube docker-env -u)
    ```
 
