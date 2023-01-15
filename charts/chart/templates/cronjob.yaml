@@ -9,6 +9,8 @@ spec:
     spec:
       template:
         spec:
+          securityContext:
+            runAsNonRoot: true
           serviceAccountName: {{ .Values.serviceAccount.name }}
           containers:
             - name: {{ .Release.Name }}
