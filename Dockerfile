@@ -9,4 +9,5 @@ RUN CGO_ENABLED=0 go build -a -tags netgo -ldflags '-w -extldflags "-static"' -o
 FROM scratch
 COPY --from=builder /go/src/app/ifk8s /
 COPY --from=builder /etc/ssl/certs /etc/ssl/certs
+USER 65532:65532
 ENTRYPOINT ["/ifk8s"]
