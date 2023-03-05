@@ -222,6 +222,8 @@ func (f *Collector) Run(ctx context.Context) (err error) {
 		if err != nil {
 			return fmt.Errorf("failed sending k8s objects tree to Infralight: %w", err)
 		}
+	} else {
+		log.Info().Msg("skipping send trees")
 	}
 
 	err = f.sendK8sObjects(fetchingId, fullData["k8s_objects"])
@@ -323,6 +325,7 @@ func (f *Collector) startNewFetching(clusterUniqueId string) (fetchingId, integr
 	err = req.Run()
 
 	responseSpllited := strings.Split(respoonse, ",")
+	integrationId = responseSpllited[0]
 	sendTrees = true
 	if len(responseSpllited) > 1 {
 		if value, err := strconv.ParseBool(responseSpllited[1]); err == nil {
@@ -330,7 +333,7 @@ func (f *Collector) startNewFetching(clusterUniqueId string) (fetchingId, integr
 		}
 	}
 
-	return fetchingId, responseSpllited[0], sendTrees, err
+	return fetchingId, integrationId, sendTrees, err
 }
 
 func (f *Collector) send(data map[string]interface{}) error {
