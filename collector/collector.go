@@ -285,11 +285,6 @@ func (f *Collector) getUniqueClusterId(ctx context.Context) (clusterId string, e
 	return string(kubeSystemNs.GetObjectMeta().GetUID()), nil
 }
 
-type responseNewFetching struct {
-	IntegrationId string `json:"integration_id"`
-	SendTrees     bool   `json:"send_trees"`
-}
-
 func (f *Collector) startNewFetching(clusterUniqueId string) (fetchingId, integrationId string, sendTrees bool, err error) {
 	fetchingId = bson.NewObjectId().Hex()
 	var respoonse string
