@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/gofireflyio/k8s-collector/collector/config"
 	"github.com/gofireflyio/k8s-collector/collector/filter"
@@ -129,6 +131,7 @@ func (f *Collector) Run(ctx context.Context) (err error) {
 	}
 
 	var uniqueClusterId, fetchingId, integrationId string
+	var sendTrees bool
 
 	if f.conf.DryRun {
 		uniqueClusterId = "dry-run-cluster-id"
@@ -139,7 +142,7 @@ func (f *Collector) Run(ctx context.Context) (err error) {
 			return fmt.Errorf("failed finding Kubernetes unique cluster ID: %w", err)
 		}
 
-		fetchingId, integrationId, err = f.startNewFetching(uniqueClusterId)
+		fetchingId, integrationId, sendTrees, err = f.startNewFetching(uniqueClusterId)
 		if err != nil {
 			if errors.Is(err, TooEarlyError) {
 				f.log.Info().Msgf("Skipping this collection cycle, due to a remote error, error: %s", err.Error())
@@ -209,14 +212,16 @@ func (f *Collector) Run(ctx context.Context) (err error) {
 		return fmt.Errorf("failed sending releases to Infralight: %w", err)
 	}
 
-	k8sTree, err := k8stree.GetK8sTree(fullData["k8s_objects"])
-	if err != nil {
-		return fmt.Errorf("failed getting k8s objects tree: %w", err)
-	}
+	if sendTrees {
+		k8sTree, err := k8stree.GetK8sTree(fullData["k8s_objects"])
+		if err != nil {
+			return fmt.Errorf("failed getting k8s objects tree: %w", err)
+		}
 
-	err = f.sendK8sTree(fetchingId, k8sTree)
-	if err != nil {
-		return fmt.Errorf("failed sending k8s objects tree to Infralight: %w", err)
+		err = f.sendK8sTree(fetchingId, k8sTree)
+		if err != nil {
+			return fmt.Errorf("failed sending k8s objects tree to Infralight: %w", err)
+		}
 	}
 
 	err = f.sendK8sObjects(fetchingId, fullData["k8s_objects"])
@@ -280,15 +285,21 @@ func (f *Collector) getUniqueClusterId(ctx context.Context) (clusterId string, e
 	return string(kubeSystemNs.GetObjectMeta().GetUID()), nil
 }
 
-func (f *Collector) startNewFetching(clusterUniqueId string) (fetchingId, integrationId string, err error) {
+type responseNewFetching struct {
+	IntegrationId string `json:"integration_id"`
+	SendTrees     bool   `json:"send_trees"`
+}
+
+func (f *Collector) startNewFetching(clusterUniqueId string) (fetchingId, integrationId string, sendTrees bool, err error) {
 	fetchingId = bson.NewObjectId().Hex()
+	var respoonse string
 	req := f.client.
 		NewRequest("GET", fmt.Sprintf("/integrations/k8s/%s/fetching", f.clusterID)).
 		QueryParam("clusterUniqueId", clusterUniqueId).
 		QueryParam("fetchingId", fetchingId).
 		QueryParam("getIntegrationId", "true").
 		ExpectedStatus(http.StatusOK).
-		Into(&integrationId).
+		Into(&respoonse).
 		ErrorHandler(func(httpStatus int, contentType string, body io.Reader) error {
 			if httpStatus == http.StatusTooEarly {
 				return TooEarlyError
@@ -316,7 +327,15 @@ func (f *Collector) startNewFetching(clusterUniqueId string) (fetchingId, integr
 	}
 	err = req.Run()
 
-	return fetchingId, integrationId, err
+	responseSpllited := strings.Split(respoonse, ",")
+	sendTrees = true
+	if len(responseSpllited) > 1 {
+		if value, err := strconv.ParseBool(responseSpllited[1]); err == nil {
+			sendTrees = value
+		}
+	}
+
+	return fetchingId, responseSpllited[0], sendTrees, err
 }
 
 func (f *Collector) send(data map[string]interface{}) error {
