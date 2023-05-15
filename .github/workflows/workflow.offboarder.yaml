@@ -32,11 +32,11 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          context: .
+          context: ./scripts/off_boarding/
           file: ./scripts/off_boarding/Dockerfile
           tags: |
             infralightio/k8-collector-offboarder:${{ github.event.inputs.collector-off-boarder-tag }}
-            infralightio/k8s-collector-offboarder:latest
+            infralightio/k8-collector-offboarder:latest
           labels: |
             org.opencontainers.image.created=${{ steps.current-time.outputs.time }}
             org.opencontainers.image.authors=Infralight
