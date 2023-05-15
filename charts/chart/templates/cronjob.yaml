@@ -43,8 +43,53 @@ spec:
                 limits:
                   cpu: {{ .Values.resources.limits.cpu }}
                   memory: {{ .Values.resources.limits.memory }}
+            {{- if .Values.argocd.enabled -}}
+            - name: {{ .Release.Name }}-argocd
+              image: "{{ .Values.argocd.image.repository }}:{{ .Values.argocd.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.argocd.image.pullPolicy }}
+              env:
+                - name: FIREFLY_ACCOUNT_ID
+                  value: {{ .Values.argocd.metadata.accountId }}
+                - name: FIREFLY_CRAWLER_ID
+                  value: {{ .Values.argocd.metadata.crawlerId }}
+                - name: LOCAL_CRAWLER_PATH
+                  value: "{{ .Values.argocd.crawlerLocalPath }}/crawler.json"
+                - name: SAAS_MODE
+                  value: "false"
+                - name: STATES_BUCKET
+                  value: {{ .Values.argocd.redactorMirrorBucketName }}
+                - name: AWS_REGION
+                  value: {{ .Values.argocd.redactorMirrorBucketRegion }}
+                - name: LOCAL_LOG_PATH
+                  value: {{ .Values.argocd.logging.appLogPath }}/{{ .Values.argocd.logging.logFile }}
+                - name: REMOTE_LOG_HASH
+                  value: {{ .Values.argocd.logging.remoteHash }}
+                - name: IACATHON_ARGOCD_DOMAIN
+                  value: {{ .Values.argocd.domain }}
+              envFrom:
+                - secretRef:
+                    name: {{ .Values.argocd.secretNameOverride | default (printf "%s-argocd-credentials" .Release.Name) }}
+              volumeMounts:
+                - name: argocd-config-volume
+                  mountPath: "{{ .Values.argocd.crawlerLocalPath }}/crawler.json"
+                  subPath: "crawler.json"
+              resources:
+                requests:
+                  cpu: {{ .Values.resources.requests.cpu }}
+                  memory: {{ .Values.resources.requests.memory }}
+                  ephemeral-storage: {{ .Values.resources.requests.ephemeralStorage}}
+                limits:
+                  cpu: {{ .Values.resources.limits.cpu }}
+                  memory: {{ .Values.resources.limits.memory }}
+                  ephemeral-storage: {{ .Values.resources.requests.ephemeralStorage}}
+            {{- end -}}
           volumes:
             - name: config-volume
               configMap:
                 name: {{ .Release.Name }}-config
+            {{- if .Values.argocd.enabled -}}
+            - name: argocd-config-volume
+              configMap:
+                name: {{ .Release.Name }}-argocd-config
+            {{- end -}}
           restartPolicy: OnFailure
