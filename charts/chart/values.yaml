@@ -19,6 +19,10 @@ image:
   repository: infralightio/k8s-collector
   pullPolicy: Always
 
+offBoarderImage:
+  repository: infralightio/k8-collector-offboarder
+  pullPolicy: Always
+
 serviceAccount:
   name: "infralight-service-account"
   annotations: {}
@@ -41,6 +45,10 @@ apiEndpoint: ""
 # loginEndpoint is the URL to Firefly's Auth. Leave empty unless you have a
 # specific reason to change this.
 loginEndpoint: ""
+
+# appApiEndpoint is the URL to Firefly's Application API. Leave empty unless you have a
+# specific reason to change this.
+appApiEndpoint: ""
 
 # fetchEverything is a boolean value indicating whether to allow Firefly to
 # fetch all Kubernetes resource types
