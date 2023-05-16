@@ -82,7 +82,7 @@ spec:
                   cpu: {{ .Values.resources.limits.cpu }}
                   memory: {{ .Values.resources.limits.memory }}
                   ephemeral-storage: {{ .Values.resources.requests.ephemeralStorage}}
-            {{- end -}}
+            {{- end }}
           volumes:
             - name: config-volume
               configMap:
@@ -91,5 +91,5 @@ spec:
             - name: argocd-config-volume
               configMap:
                 name: {{ .Release.Name }}-argocd-config
-            {{- end -}}
+            {{- end }}
           restartPolicy: OnFailure
