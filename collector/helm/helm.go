@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/release"
 
 	"github.com/gofireflyio/k8s-collector/collector/config"
 )
@@ -58,9 +59,9 @@ func (c *Collector) Source() string {
 // Run executes the collector with the provided configuration object, and
 // returns a list of collected Helm releases from the Kubernetes cluster.
 func (c *Collector) Run(ctx context.Context, _ *config.Config) (
-	keyName string,
-	data []interface{},
-	err error,
+    keyName string,
+    data []interface{},
+    err error,
 ) {
 	log.Debug().Msg("Starting collect Helm repositories")
 	client := action.NewList(c.sdkConfig)
@@ -73,10 +74,25 @@ func (c *Collector) Run(ctx context.Context, _ *config.Config) (
 
 	releases := make([]interface{}, len(results))
 	for i, rel := range results {
+		rel.Manifest = appendCrdsAsManifests(rel)
 		releases[i] = rel
 	}
 
 	log.Info().Int("amount", len(releases)).Msg("Finished collecting Helm repositories")
 
 	return "helm_releases", releases, nil
+}
+
+func formatCrds(release *release.Release) string {
+	crds := ""
+	for _, crd := range release.Chart.CRDObjects() {
+		crds += fmt.Sprintf("---\n#%s\n%s\n", crd.Filename, string(crd.File.Data))
+	}
+	return crds
+}
+
+func appendCrdsAsManifests(release *release.Release) string {
+	crdsString := formatCrds(release)
+
+	return release.Manifest + "\n" + crdsString
 }
