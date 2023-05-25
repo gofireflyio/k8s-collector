@@ -43,4 +43,4 @@ spec:
             - name: CLUSTER_ID
               value: {{ .Values.clusterId }}
             - name: APP_API_URL
-              value: {{ .Values.appApiUrl }}
+              value: {{ .Values.appApiEndpoint }}
