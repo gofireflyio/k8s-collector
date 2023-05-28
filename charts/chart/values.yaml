@@ -35,6 +35,7 @@ argocd:
   crawlerLocalPath: "/var/tmp"
   redactorMirrorBucketName: ""
   redactorMirrorBucketRegion: "us-east-1"
+  saveToRemoteBucket: false
   logging:
     remoteHash: ""
     appLogPath: "/var/tmp"
