@@ -1,0 +1,46 @@
+{{- if semverCompare ">=1.21-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: batch/v1
+{{- else -}}
+apiVersion: batch/v1beta1
+{{- end }}
+kind: Job
+metadata:
+  name: "{{ .Release.Name }}-collector-off-boarder"
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      name: "{{ .Release.Name }}"
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: integration-deletion
+          image: "{{ .Values.offBoarderImage.repository }}:{{ .Values.image.offBoarderImage | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
+          env:
+            - name: ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-credentials
+                  key: accessKey
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-credentials
+                  key: secretKey
+            - name: CLUSTER_ID
+              value: {{ .Values.clusterId }}
+            - name: APP_API_URL
+              value: {{ .Values.appApiEndpoint }}

@@ -19,6 +19,34 @@ image:
   repository: infralightio/k8s-collector
   pullPolicy: Always
 
+offBoarderImage:
+  repository: infralightio/k8-collector-offboarder
+  pullPolicy: Always
+
+argocd:
+  enabled: false
+  image:
+    repository: infralightio/self-hosted-redactor
+    pullPolicy: Always
+    tag: latest
+  secretNameOverride:
+  domain: ""
+  token: ""
+  crawlerLocalPath: "/var/tmp"
+  redactorMirrorBucketName: ""
+  redactorMirrorBucketRegion: "us-east-1"
+  saveToRemoteBucket: false
+  logging:
+    remoteHash: ""
+    appLogPath: "/var/tmp"
+    logFile: "crawler.log"
+  metadata:
+    accountId: ""
+    crawlerId: ""
+    location: {}
+    type: "argocd"
+    active: true
+
 serviceAccount:
   name: "infralight-service-account"
   annotations: {}
@@ -30,9 +58,11 @@ resources:
   requests:
     cpu: "1.0"
     memory: "512Mi"
+    ephemeralStorage: "256Mi"
   limits:
     cpu: "1.0"
     memory: "2048Mi"
+    ephemeralStorage: "512Mi"
 
 # apiEndpoint is the URL to Firefly's API. Leave empty unless you have a
 # specific reason to change this.
@@ -42,17 +72,21 @@ apiEndpoint: ""
 # specific reason to change this.
 loginEndpoint: ""
 
+# appApiEndpoint is the URL to Firefly's Application API. Leave empty unless you have a
+# specific reason to change this.
+appApiEndpoint: ""
+
 # fetchEverything is a boolean value indicating whether to allow Firefly to
 # fetch all Kubernetes resource types
 fetchEverything: true
 
 # removeTypes accepts a list of resource types that should be removed from the
 # default list of allowed resources.
-removeTypes: []
+removeTypes: [ ]
 
 # addTypes accepts a list of resource types that should be added to the default
 # list of allowed resources. This is mostly useful for CRDs.
-addTypes: []
+addTypes: [ ]
 
 # DEPRECATED: collectSecrets is a boolean value indicating whether the collector
 # should collect secrets from the cluster. This value is deprecated in favor of
