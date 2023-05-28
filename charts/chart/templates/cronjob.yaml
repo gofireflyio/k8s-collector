@@ -43,7 +43,7 @@ spec:
                 limits:
                   cpu: {{ .Values.resources.limits.cpu }}
                   memory: {{ .Values.resources.limits.memory }}
-            {{- if .Values.argocd.enabled -}}
+{{ if .Values.argocd.enabled }}
             - name: {{ .Release.Name }}-argocd
               image: "{{ .Values.argocd.image.repository }}:{{ .Values.argocd.image.tag | default .Chart.AppVersion }}"
               imagePullPolicy: {{ .Values.argocd.image.pullPolicy }}
@@ -82,14 +82,14 @@ spec:
                   cpu: {{ .Values.resources.limits.cpu }}
                   memory: {{ .Values.resources.limits.memory }}
                   ephemeral-storage: {{ .Values.resources.requests.ephemeralStorage}}
-            {{- end }}
+{{ end }}
           volumes:
             - name: config-volume
               configMap:
                 name: {{ .Release.Name }}-config
-            {{- if .Values.argocd.enabled -}}
+{{if .Values.argocd.enabled }}
             - name: argocd-config-volume
               configMap:
                 name: {{ .Release.Name }}-argocd-config
-            {{- end }}
+{{ end }}
           restartPolicy: OnFailure
