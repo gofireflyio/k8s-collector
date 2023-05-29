@@ -67,7 +67,7 @@ spec:
                 - name: IACATHON_ARGOCD_DOMAIN
                   value: {{ .Values.argocd.domain }}
                 - name: REMOTE_BUCKET
-                  value: {{ .Values.argocd.saveToRemoteBucket }}
+                  value: {{ quote .Values.argocd.saveToRemoteBucket}}
               envFrom:
                 - secretRef:
                     name: {{ .Values.argocd.secretNameOverride | default (printf "%s-argocd-credentials" .Release.Name) }}
