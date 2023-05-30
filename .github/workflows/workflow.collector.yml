@@ -50,13 +50,13 @@ jobs:
       with:
         push: true
         tags: |
-          infralightio/k8s-collector:${{ github.event.inputs.collectortag }}
+          infralightio/k8s-collector:${{ (github.event.name == 'workflow_dispatch' && github.event.inputs.collectortag) || inputs.collectortag }}
           infralightio/k8s-collector:latest
         labels: |
           org.opencontainers.image.created=${{ steps.current-time.outputs.time }}
           org.opencontainers.image.authors=Infralight
           org.opencontainers.image.revision=${{ github.sha }}
-          org.opencontainers.image.version=${{ github.event.inputs.collectortag }}
+          org.opencontainers.image.version=${{ (github.event.name == 'workflow_dispatch' && github.event.inputs.collectortag) || inputs.collectortag }}
 
     - name: Slack Notification
       if: ${{ success() }}
