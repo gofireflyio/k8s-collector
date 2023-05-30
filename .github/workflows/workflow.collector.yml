@@ -13,16 +13,16 @@ on:
         description: 'Version Tag for the Collector Docker Image'
         required: true
         default: '1.0.0'
-      secrets:
-        DOCKERHUB_USERNAME:
-          description: 'Dockerhub Username'
-          required: true
-        DOCKERHUB_TOKEN:
-          description: 'Dockerhub Token'
-          required: true
-        SLACK_WEBHOOK:
-          description: 'Slack Webhook'
-          required: true
+    secrets:
+      DOCKERHUB_USERNAME:
+        description: 'Dockerhub Username'
+        required: true
+      DOCKERHUB_TOKEN:
+        description: 'Dockerhub Token'
+        required: true
+      SLACK_WEBHOOK:
+        description: 'Slack Webhook'
+        required: true
 jobs:
   build:
     runs-on: ubuntu-latest
