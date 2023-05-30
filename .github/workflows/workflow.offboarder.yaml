@@ -9,9 +9,20 @@ on:
   workflow_call:
     inputs:
       collector-off-boarder-tag:
+        type: string
         description: 'Version Tag for the Collector Off-Boarder Docker Image'
         required: true
         default: '1.0.0'
+    secrets:
+      DOCKERHUB_USERNAME:
+        description: 'Dockerhub Username'
+        required: true
+      DOCKERHUB_TOKEN:
+        description: 'Dockerhub Token'
+        required: true
+      SLACK_WEBHOOK:
+        description: 'Slack Webhook'
+        required: true
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -41,13 +52,13 @@ jobs:
           context: ./scripts/off_boarding/
           file: ./scripts/off_boarding/Dockerfile
           tags: |
-            infralightio/k8-collector-offboarder:${{ github.event.inputs.collector-off-boarder-tag }}
+            infralightio/k8-collector-offboarder:${{ (github.event.name == 'workflow_dispatch' && github.event.inputs.collector-off-boarder-tag) || inputs.collector-off-boarder-tag }}
             infralightio/k8-collector-offboarder:latest
           labels: |
             org.opencontainers.image.created=${{ steps.current-time.outputs.time }}
             org.opencontainers.image.authors=Infralight
             org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.version=${{ github.event.inputs.collector-off-boarder-tag }}
+            org.opencontainers.image.version=${{ (github.event.name == 'workflow_dispatch' && github.event.inputs.collector-off-boarder-tag) || inputs.collector-off-boarder-tag }}
 
       - name: Slack Notification
         if: ${{ success() }}
