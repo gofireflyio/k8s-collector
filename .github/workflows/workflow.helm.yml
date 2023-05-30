@@ -36,6 +36,6 @@ jobs:
     outputs:
       chart_version: ${{ steps.get_chart_version.outputs.CHART_VERSION }}
   build-collector-image:
-    uses: gofireflyio/k8s-collector/.github/workflows/workflow.collector.yml@${{ github.ref_name }}
+    uses: gofireflyio/k8s-collector/.github/workflows/workflow.collector.yml@$GITHUB_REF_NAME
     with:
       collectortag: ${{ needs.release.outputs.chart_version }}
