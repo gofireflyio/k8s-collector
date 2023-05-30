@@ -6,6 +6,12 @@ on:
         description: 'Version Tag for the Collector Off-Boarder Docker Image'
         required: true
         default: '1.0.0'
+  workflow_call:
+    inputs:
+      collector-off-boarder-tag:
+        description: 'Version Tag for the Collector Off-Boarder Docker Image'
+        required: true
+        default: '1.0.0'
 jobs:
   build:
     runs-on: ubuntu-latest
