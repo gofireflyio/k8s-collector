@@ -41,6 +41,6 @@ jobs:
     with:
       collectortag: ${{ needs.release.outputs.chart_version }}
     secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
