@@ -2,6 +2,17 @@ apiVersion: v1
 entries:
   firefly-k8s-collector:
   - apiVersion: v2
+    appVersion: 1.4.3
+    created: "2023-06-04T13:39:52.748199769Z"
+    description: Firefly's Kubernetes Collector
+    digest: fc379fce9d7b4a4e1c85b3af8eb798c1afc7ad8f15f8bbb61fad352a2baff245
+    home: https://github.com/gofireflyio/k8s-collector
+    name: firefly-k8s-collector
+    type: application
+    urls:
+    - https://github.com/gofireflyio/k8s-collector/releases/download/firefly-k8s-collector-1.4.3/firefly-k8s-collector-1.4.3.tgz
+    version: 1.4.3
+  - apiVersion: v2
     appVersion: 1.4.2
     created: "2023-05-29T09:04:23.83008947Z"
     description: Firefly's Kubernetes Collector
@@ -189,4 +200,4 @@ entries:
     urls:
     - https://github.com/infralight/k8s-collector/releases/download/infralight-k8s-collector-1.1.1/infralight-k8s-collector-1.1.1.tgz
     version: 1.1.1
-generated: "2023-05-29T09:04:23.830265779Z"
+generated: "2023-06-04T13:39:52.74825647Z"
