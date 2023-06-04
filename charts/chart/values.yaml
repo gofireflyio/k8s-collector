@@ -12,6 +12,11 @@ schedule: "*/15 * * * *"
 accessKey: null
 secretKey: null
 
+# to use an existing secret for accessKey and secretKey, set the name of the secret here
+# the existing secret should have accessKey and secretKey keys
+# accessKey and secretKey values are ignored if this is set
+existingFireFlyCredentialsSecret: ""
+
 # image defines the name and pull policy for the OCI image of the collector.
 # By default, the tag defaults to the appVersion value in the chart. You can
 # set a specific tag via the "tag" field.

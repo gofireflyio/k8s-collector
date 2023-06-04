@@ -24,12 +24,12 @@ spec:
                 - name: INFRALIGHT_ACCESS_KEY
                   valueFrom:
                     secretKeyRef:
-                      name: {{ .Release.Name }}-credentials
+                      name: {{ template "fireFlyCredentialsSecret" . }}
                       key: accessKey
                 - name: INFRALIGHT_SECRET_KEY
                   valueFrom:
                     secretKeyRef:
-                      name: {{ .Release.Name }}-credentials
+                      name: {{ template "fireFlyCredentialsSecret" . }}
                       key: secretKey
                 - name: CLUSTER_ID
                   value: {{ .Values.clusterId }}

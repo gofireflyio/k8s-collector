@@ -33,12 +33,12 @@ spec:
             - name: ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-credentials
+                  name: {{ template "fireFlyCredentialsSecret" . }}
                   key: accessKey
             - name: SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-credentials
+                  name: {{ template "fireFlyCredentialsSecret" . }}
                   key: secretKey
             - name: CLUSTER_ID
               value: {{ .Values.clusterId }}
