@@ -67,7 +67,7 @@ spec:
                 - name: IACATHON_ARGOCD_DOMAIN
                   value: {{ .Values.argocd.domain }}
                 - name: IACATHON_ARGOCD_INSECURE
-                  value: {{ .Values.argocd.insecure }}
+                  value: {{ quote .Values.argocd.insecure }}
                 - name: REMOTE_BUCKET
                   value: {{ quote .Values.argocd.saveToRemoteBucket}}
               envFrom:
