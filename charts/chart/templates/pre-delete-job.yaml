@@ -5,7 +5,7 @@ apiVersion: batch/v1beta1
 {{- end }}
 kind: Job
 metadata:
-  name: "{{ .Release.Name }}-collector-off-boarder"
+  name: {{ template "fireFlyCollectorOffBoarderJob" . }}
   annotations:
     # This is what defines this resource as a hook. Without this line, the
     # job is considered part of the release.
@@ -15,7 +15,7 @@ spec:
   backoffLimit: 2
   template:
     metadata:
-      name: "{{ .Release.Name }}"
+      name: "off-boarder"
     spec:
       restartPolicy: OnFailure
       containers:

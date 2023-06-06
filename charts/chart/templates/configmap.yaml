@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-argocd-config
+  name: {{ template "fireFlyArgoConfigMap" .}}
 data:
   "crawler.json": {{ .Values.argocd.metadata | toJson | quote }}
 {{- end }}
@@ -10,7 +10,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-config
+  name: {{ template "fireFlyCollectorConfigMap" .}}
 data:
 {{ if .Values.apiEndpoint }}
   endpoint: {{ quote .Values.apiEndpoint }}
