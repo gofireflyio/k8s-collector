@@ -30,6 +30,10 @@
 {{- printf "%s-%s" (.Release.Name | trunc ((sub 53 (len "-collector-off-boarder")) | int) | trimSuffix "-") "collector-off-boarder" }}
 {{- end -}}
 
+{{- define "fireFlyCollectorOnBoarderJob"}}
+{{- printf "%s-%s" (.Release.Name | trunc ((sub 53 (len "-collector-on-boarder")) | int) | trimSuffix "-") "collector-on-boarder" }}
+{{- end -}}
+
 {{- define "fireFlyArgocdCredentials" -}}
 {{- if .Values.argocd.secretNameOverride -}}
 {{- printf "%s" .Values.argocd.secretNameOverride }}

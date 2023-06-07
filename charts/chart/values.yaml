@@ -17,6 +17,10 @@ secretKey: null
 # accessKey and secretKey values are ignored if this is set
 existingFireFlyCredentialsSecret: ""
 
+# incase the integration does not exist in firefly, the collector will create it
+# if you would like to mark as a production cluster set this to true
+isProduction: false
+
 # image defines the name and pull policy for the OCI image of the collector.
 # By default, the tag defaults to the appVersion value in the chart. You can
 # set a specific tag via the "tag" field.
@@ -27,6 +31,7 @@ image:
 offBoarderImage:
   repository: infralightio/k8-collector-offboarder
   pullPolicy: Always
+  tag: null
 
 argocd:
   enabled: false

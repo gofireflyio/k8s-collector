@@ -65,4 +65,29 @@ class FireflyApiClient:
             return
         response.raise_for_status()
 
+    def create_k8s_integration(self, cluster_id: str, access_key: str, is_prod: bool) -> None:
+        logging.info(f"Creating Kubernetes Integration for Cluster {cluster_id}")
+        response = self.session.post(
+            f'{self._base_url}/api/integrations/k8s',
+            {
+                'clusterId': cluster_id, 'accessKey': access_key, 'isProd': is_prod, 'name': cluster_id
+            }
+        )
+        if response.status_code == 409:
+            logging.info(f"Kubernetes Integration for Cluster {cluster_id} already exists")
+            return
+        response.raise_for_status()
+
+    def does_k8s_integration_exist(self, cluster_id: str) -> bool:
+        logging.info(f"Checking if Kubernetes Integration for Cluster {cluster_id} exists")
+        response = self.session.get(f'{self._base_url}/api/integrations/k8s/{cluster_id}')
+        if response.status_code == 404:
+            logging.info(f"Kubernetes Integration for Cluster {cluster_id} not found")
+            return False
+        response.raise_for_status()
+        return True
+
+
+
+
 
