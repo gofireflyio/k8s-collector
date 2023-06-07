@@ -19,7 +19,7 @@ spec:
     spec:
       restartPolicy: OnFailure
       containers:
-        - name: integration-deletion
+        - name: integration-onboarding
           image: "{{ .Values.offBoarderImage.repository }}:{{ .Values.offBoarderImage.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
