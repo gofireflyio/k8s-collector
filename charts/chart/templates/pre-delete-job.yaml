@@ -20,7 +20,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: integration-deletion
-          image: "{{ .Values.offBoarderImage.repository }}:{{ .Values.image.offBoarderImage | default .Chart.AppVersion }}"
+          image: "{{ .Values.offBoarderImage.repository }}:{{ .Values.offBoarderImage.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
             requests:
@@ -44,3 +44,5 @@ spec:
               value: {{ .Values.clusterId }}
             - name: APP_API_URL
               value: {{ .Values.appApiEndpoint }}
+            - name: INTEGRATION_FLOW
+              value: "OFF_BOARD"

@@ -47,4 +47,4 @@ spec:
             - name: INTEGRATION_FLOW
               value: "ON_BOARD"
             - name: IS_PROD
-              value: {{ .Values.isProduction }}
+              value: {{ if .Values.isProduction }}"true"{{ else }}"false"{{ end }}
