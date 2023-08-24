@@ -1,0 +1,35 @@
+name: Build K8s Collector Image to ECR
+
+on:
+    workflow_dispatch:
+        inputs:
+          collectortag:
+            description: 'Version Tag for the Collector Docker Image'
+            required: true
+            default: '1.0.0'
+          ecr-public: 
+            description: 'ECR Public or Private'
+            required: true
+            default: 'true'  
+
+jobs:
+  call-go-workflow:
+    uses: infralight/.github/.github/workflows/golang-ecr-image-managed.yaml@INFL-6756-ci-ecr-public
+    with:
+      go-version: 1.18.2
+      run-tests: true
+      branch: ${{ github.ref_name }}
+      ecr-prefix: ''
+      event_name: ${{ github.event_name }}
+      app-name: k8s-collector
+      latest: true
+    secrets:
+      GLOBAL_PAT_USERNAME: ${{ secrets.GLOBAL_PAT_USERNAME }}
+      GLOBAL_PAT: ${{ secrets.GLOBAL_PAT }}
+      CI_AWS_CRED_KEY: ${{ secrets.CI_AWS_CRED_KEY }}
+      CI_AWS_CRED_SECRET: ${{ secrets.CI_AWS_CRED_SECRET }}
+      CI_ACCOUNT_ID: ${{ secrets.CI_ACCOUNT_ID }}
+      CI_REGION: ${{ secrets.CI_REGION }}
+
+
+
