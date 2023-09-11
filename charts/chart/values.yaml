@@ -16,7 +16,7 @@ secretKey: null
 # the existing secret should have accessKey and secretKey keys
 # accessKey and secretKey values are ignored if this is set
 existingFireFlyCredentialsSecret: ""
-
+existingFireFlyArgocdCredentialsSecret: ""
 # incase the integration does not exist in firefly, the collector will create it
 # if you would like to mark as a production cluster set this to true
 isProduction: false
