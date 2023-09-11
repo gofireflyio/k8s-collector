@@ -36,6 +36,7 @@ offBoarderImage:
 argocd:
   enabled: false
   insecure: true
+  disable_plaintext: true
   image:
     repository: infralightio/self-hosted-redactor
     pullPolicy: Always
