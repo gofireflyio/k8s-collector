@@ -16,8 +16,11 @@ import (
 	"github.com/gofireflyio/k8s-collector/collector/filter"
 	"github.com/gofireflyio/k8s-collector/collector/k8stree"
 	"github.com/ido50/requests"
+	"github.com/infralight/redactor/pkg/gitleaks"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
+	gitleaksConfig "github.com/zricethezav/gitleaks/v8/config"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/mgo.v2/bson"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -78,6 +81,32 @@ type Collector struct {
 }
 
 var clusterIDRegex = regexp.MustCompile(`^[a-z0-9-_]+$`)
+
+var gitleaksCfg gitleaksConfig.Config
+
+func init() {
+	viper.SetConfigFile("gitleaks.toml")
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed loading gitleaks config: %s\n", err)
+		os.Exit(1)
+	}
+
+	var vc gitleaksConfig.ViperConfig
+
+	err = viper.Unmarshal(&vc)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed parsing gitleaks config: %s\n", err)
+		os.Exit(1)
+	}
+
+	gitleaksCfg, err = vc.Translate()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed translating gitleaks config: %s\n", err)
+		os.Exit(1)
+	}
+}
 
 // New creates a new instance of the Collector struct. A Kubernetes cluster ID
 // must be provided, together with a configuration object and a list of objects
@@ -336,16 +365,23 @@ func (f *Collector) startNewFetching(clusterUniqueId string) (fetchingId, integr
 	return fetchingId, integrationId, sendTrees, err
 }
 
-func (f *Collector) send(data map[string]interface{}) error {
-	f.conf.Log.Debug().
-		Interface("data", data).
-		Msg("Sending collected data to Infralight")
+func redactSensitiveInformation(r io.Reader, w io.Writer) error {
+	data, err := io.ReadAll(r)
+	if err != nil {
+		return fmt.Errorf("failed reading body: %w", err)
+	}
 
-	return f.client.
-		NewRequest("POST", fmt.Sprintf("/integrations/k8s/%s/fetching", f.clusterID)).
-		ExpectedStatus(http.StatusNoContent).
-		JSONBody(data).
-		Run()
+	_, redactedData, err := gitleaks.Redact(nil, gitleaksCfg, data, "", "REDACTED-BY-FIREFLY")
+	if err != nil {
+		return fmt.Errorf("failed redacting sensitive information: %w", err)
+	}
+
+	_, err = w.Write(redactedData)
+	if err != nil {
+		return fmt.Errorf("failed writing redacted data: %w", err)
+	}
+
+	return nil
 }
 
 func (f *Collector) sendK8sObjects(fetchingId string, data []interface{}) error {
@@ -403,6 +439,7 @@ func (f *Collector) sendK8sObjects(fetchingId string, data []interface{}) error 
 				ExpectedStatus(http.StatusNoContent).
 				RetryLimit(uint8(f.conf.MongoMaxRetries)).
 				JSONBody(body).
+				ReqBodyProcessor(redactSensitiveInformation).
 				Run()
 			if err != nil {
 				log.Err(err).Str("ClusterId", f.clusterID).Str("FetchingId", fetchingId).
@@ -502,6 +539,7 @@ func (f *Collector) sendHelmReleases(
 				QueryParam("integrationId", f.integrationId).
 				ExpectedStatus(http.StatusNoContent).
 				JSONBody(body).
+				ReqBodyProcessor(redactSensitiveInformation).
 				Timeout(f.conf.PageTimeoutDuration).
 				RetryLimit(uint8(f.conf.MongoMaxRetries)).
 				Run()
@@ -597,6 +635,7 @@ func (f *Collector) sendK8sTree(fetchingId string, data []k8stree.ObjectsTree) e
 				QueryParam("integrationId", f.integrationId).
 				ExpectedStatus(http.StatusNoContent).
 				JSONBody(body).
+				ReqBodyProcessor(redactSensitiveInformation).
 				Timeout(f.conf.PageTimeoutDuration).
 				RetryLimit(uint8(f.conf.MongoMaxRetries)).
 				Run()
