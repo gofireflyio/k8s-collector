@@ -41,3 +41,12 @@
 {{- printf "%s-%s" (.Release.Name | trunc ((sub 63 (len "-argocd-credentials")) | int) | trimSuffix "-") "argocd-credentials" }}
 {{- end -}}
 {{- end -}}
+
+{{- define "validateClusterId" -}}
+{{- if not .Values.clusterId -}}
+{{- fail "clusterId value is required and cannot be empty" -}}
+{{- end -}}
+{{- if not (regexMatch "^[a-z0-9-_]+$" .Values.clusterId) -}}
+{{- fail "clusterId value must contain only must contain only lowercase letters, numbers, hyphens, and underscores." -}}
+{{- end -}}
+{{- end -}}
