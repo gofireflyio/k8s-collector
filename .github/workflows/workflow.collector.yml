@@ -53,6 +53,8 @@ jobs:
           --label "org.opencontainers.image.authors=Infralight" \
           --label "org.opencontainers.image.revision=${{ github.sha }}" \
           --label "org.opencontainers.image.version=${{ github.event.inputs.collectortag }}" \
+          --build-arg "ACCESS_TOKEN_USR=${{ secrets.ACCESS_TOKEN_USR }}" \
+          --build-arg "ACCESS_TOKEN_PWD=${{ secrets.ACCESS_TOKEN_PWD }}" \
           --push .
       env:
         DOCKER_CLI_AGGREGATE: 1
