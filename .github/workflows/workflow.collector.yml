@@ -23,6 +23,12 @@ on:
       SLACK_WEBHOOK:
         description: 'Slack Webhook'
         required: true
+      ACCESS_TOKEN_USR:
+        description: 'Github Access usr'
+        required: true
+      ACCESS_TOKEN_PWD:
+        description: 'Github Access pwd'
+        required: true
 jobs:
   build:
     runs-on: [self-hosted, production]
