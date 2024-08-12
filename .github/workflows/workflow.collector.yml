@@ -29,6 +29,9 @@ on:
       ACCESS_TOKEN_PWD:
         description: 'Github Access pwd'
         required: true
+      GLOBAL_PAT:
+        description: 'GLOBAL_PAT'
+        required: true
 jobs:
   build:
     runs-on: [self-hosted, production]
@@ -46,7 +49,8 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-
+    - name: Configure git for private modules
+      run: git config --global url."https://${{ secrets.GLOBAL_PAT }}:x-oauth-basic@github.com".insteadOf "https://github.com"
     - name: Build and push multi-platform image
       run: |
         docker buildx create --use
