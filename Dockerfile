@@ -1,3 +1,5 @@
+ARG ACCESS_TOKEN_USR=""
+ARG ACCESS_TOKEN_PWD=""
 # Builder stage
 FROM --platform=${TARGETPLATFORM:-linux/amd64} golang:1.18.7-alpine3.16 as builder
 
