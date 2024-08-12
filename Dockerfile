@@ -30,8 +30,8 @@ RUN go mod download
 # Copy the go source
 COPY . .
 
-RUN go test ./...
-RUN CGO_ENABLED=0 go build -a -tags netgo -ldflags '-w -extldflags "-static"' -o ifk8s main.go
+RUN CGO_ENABLED=0 go test ./...
+RUN CGO_ENABLED=0 go build -o ifk8s main.go
 
 # Final stage
 FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:3.16.1
