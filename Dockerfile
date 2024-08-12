@@ -37,5 +37,6 @@ RUN CGO_ENABLED=0 go build -o ifk8s main.go
 FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:3.16.1
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /workspace/ifk8s /
+COPY gitleaks.toml /
 USER 65532:65532
 ENTRYPOINT ["/ifk8s"]
