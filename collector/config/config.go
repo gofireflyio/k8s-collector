@@ -26,10 +26,10 @@ const (
 	DefaultConfigDir = "/etc/config"
 
 	// DefaultFireflyAPI is the default URL for Firefly's API
-	DefaultFireflyAPI = "https://k8s-api.prod.external.api.infralight.cloud"
+	DefaultFireflyAPI = "https://gateway.firefly.ai"
 
 	// DefaultFireflyLoginAPI is the default URL for Firefly's Login API
-	DefaultFireflyLoginAPI = "https://prod.external.api.infralight.cloud"
+	DefaultFireflyLoginAPI = "https://gateway.firefly.ai"
 )
 
 var (
@@ -344,5 +344,5 @@ func (fs *localFS) Open(name string) (fs.File, error) {
 }
 
 func isOldEndpoint(endpoint string) bool {
-	return endpoint == "https://prodapi.infralight.cloud/api"
+	return endpoint == "https://gateway.firefly.ai/api"
 }
