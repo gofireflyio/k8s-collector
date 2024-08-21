@@ -34,7 +34,7 @@ COPY . .
 
 RUN CGO_ENABLED=0 go test ./...
 RUN CGO_ENABLED=0 go build -o ifk8s \
-                           -ldflags="-X 'github.com/gofireflyio/k8s-collector/collector.Version=$(VERSION)' -X 'github.com/gofireflyio/k8s-collector/collector.BuildDate=$(date -Iminutes)' -X 'github.com/gofireflyio/k8s-collector/collector.CommitHash=$(COMMIT_HASH)'" \
+                           -ldflags="-X 'github.com/gofireflyio/k8s-collector/collector.Version=${VERSION}' -X 'github.com/gofireflyio/k8s-collector/collector.BuildDate=$(date -Iminutes)' -X 'github.com/gofireflyio/k8s-collector/collector.CommitHash=${COMMIT_HASH}'" \
                            main.go
 
 # Final stage
