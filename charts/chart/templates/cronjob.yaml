@@ -23,6 +23,16 @@ spec:
               image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
               imagePullPolicy: {{ .Values.image.pullPolicy }}
               env:
+                - name: INFRALIGHT_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ template "fireFlyCredentialsSecret" . }}
+                      key: accessKey
+                - name: INFRALIGHT_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ template "fireFlyCredentialsSecret" . }}
+                      key: secretKey              
                 - name: FIREFLY_ACCESS_KEY
                   valueFrom:
                     secretKeyRef:
