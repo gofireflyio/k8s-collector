@@ -4,13 +4,14 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/thoas/go-funk"
 	"io/ioutil"
+	"os"
+	"strings"
+
+	"github.com/thoas/go-funk"
 	v1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"os"
-	"strings"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -42,7 +43,17 @@ func main() {
 	)
 	configDir := flag.String("config", "/etc/config", "configuration files directory")
 	dryRun := flag.Bool("dry-run", false, "dry run (do not send anything to Firefly)")
+	version := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
+
+	if *version {
+		fmt.Printf(
+			"Firefly k8s-collector v%s, compiled %s\n",
+			collector.Version,
+			collector.BuildDate,
+		)
+		os.Exit(0)
+	}
 
 	// Initiate a logger
 	logger := loadLogger(*debug)
