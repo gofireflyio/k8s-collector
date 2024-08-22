@@ -54,7 +54,6 @@ jobs:
           file: ./scripts/integration_management/Dockerfile
           tags: |
             infralightio/k8-collector-offboarder:${{ (github.event.name == 'workflow_dispatch' && github.event.inputs.collector-off-boarder-tag) || inputs.collector-off-boarder-tag }}
-            infralightio/k8-collector-offboarder:latest
           labels: |
             org.opencontainers.image.created=${{ steps.current-time.outputs.time }}
             org.opencontainers.image.authors=Infralight
