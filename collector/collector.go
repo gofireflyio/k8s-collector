@@ -385,10 +385,14 @@ func redactSensitiveInformation(r io.Reader, w io.Writer) error {
 		return fmt.Errorf("failed reading body: %w", err)
 	}
 
+	fmt.Fprintf(os.Stderr, "DATA BEFORE REDACTION: %d\n", len(data))
+
 	_, redactedData, err := gitleaks.Redact(nil, gitleaksCfg, data, "", "REDACTED-BY-FIREFLY")
 	if err != nil {
 		return fmt.Errorf("failed redacting sensitive information: %w", err)
 	}
+
+	fmt.Fprintf(os.Stderr, "DATA AFTER REDACTION: %d\n", len(redactedData))
 
 	_, err = w.Write(redactedData)
 	if err != nil {
