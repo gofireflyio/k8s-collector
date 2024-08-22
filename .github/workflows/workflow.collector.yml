@@ -1,4 +1,5 @@
 name: Build K8s Collector Image
+run-name: Build K8s Collector Image ${{ github.event.inputs.collectortag }}
 on:
   workflow_dispatch:
     inputs:
