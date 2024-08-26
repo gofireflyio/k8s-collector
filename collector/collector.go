@@ -389,10 +389,11 @@ func redactSensitiveInformation(r io.Reader, w io.Writer) error {
 
 	_, redactedData, err := gitleaks.Redact(nil, gitleaksCfg, data, "", "REDACTED-BY-FIREFLY")
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "REDACTION FAILED: %s\n", err)
 		return fmt.Errorf("failed redacting sensitive information: %w", err)
+	} else {
+		fmt.Fprintf(os.Stderr, "DATA AFTER REDACTION: %d\n", len(redactedData))
 	}
-
-	fmt.Fprintf(os.Stderr, "DATA AFTER REDACTION: %d\n", len(redactedData))
 
 	_, err = w.Write(redactedData)
 	if err != nil {
@@ -441,14 +442,22 @@ func (f *Collector) sendK8sObjects(fetchingId string, data []interface{}) error 
 		concurrentGoroutines <- struct{}{}
 
 		routineObjects := chunkObjects
-		g.Go(func() error {
+		g.Go(func() (err error) {
 			defer func() {
+				if r := recover(); r != nil {
+					fmt.Fprintf(os.Stderr, "REDACTION PANICKED: %s\n", r)
+					var ok bool
+					if err, ok = r.(error); !ok {
+						err = fmt.Errorf("redaction failed with a panic: %s", r)
+					}
+				}
+
 				<-concurrentGoroutines
 			}()
 			body := make(map[string]interface{}, 2)
 			body["fetchingId"] = fetchingId
 			body["k8sObjects"] = routineObjects
-			err := f.client.
+			err = f.client.
 				NewRequest(
 					"POST",
 					fmt.Sprintf("/integrations/k8s/%s/fetching/objects", f.clusterID),
@@ -469,7 +478,9 @@ func (f *Collector) sendK8sObjects(fetchingId string, data []interface{}) error 
 			log.Info().Str("ClusterId", f.clusterID).Str("FetchingId", fetchingId).
 				Int("ResourcesInPage", len(routineObjects)).
 				Msg("Sent k8s objects page successfully")
-			return nil
+			return err
+			// NOTE: err must be returned even if it's nil because
+			// the defer call may modify it in case of a panic
 		})
 	}
 	if err := g.Wait(); err != nil {
@@ -545,15 +556,23 @@ func (f *Collector) sendHelmReleases(
 		concurrentGoroutines <- struct{}{}
 
 		routineObjects := chunkObjects
-		g.Go(func() error {
+		g.Go(func() (err error) {
 			defer func() {
+				if r := recover(); r != nil {
+					fmt.Fprintf(os.Stderr, "REDACTION PANICKED: %s\n", r)
+					var ok bool
+					if err, ok = r.(error); !ok {
+						err = fmt.Errorf("redaction failed with a panic: %s", r)
+					}
+				}
+
 				<-concurrentGoroutines
 			}()
 			body := make(map[string]interface{}, 3)
 			body["fetchingId"] = fetchingId
 			body["helmReleases"] = routineObjects
 			body["k8sTypes"] = types
-			err := f.client.
+			err = f.client.
 				NewRequest("POST", fmt.Sprintf("/integrations/k8s/%s/fetching/helm", f.clusterID)).
 				Header("X-Firefly-Redacted", "true").
 				QueryParam("integrationId", f.integrationId).
@@ -572,7 +591,7 @@ func (f *Collector) sendHelmReleases(
 			log.Info().Str("ClusterId", f.clusterID).Str("FetchingId", fetchingId).
 				Int("ResourcesInPage", len(routineObjects)).
 				Msg("Sent helm releases page successfully")
-			return nil
+			return err
 		})
 	}
 	if err := g.Wait(); err != nil {
@@ -643,14 +662,22 @@ func (f *Collector) sendK8sTree(fetchingId string, data []k8stree.ObjectsTree) e
 		concurrentGoroutines <- struct{}{}
 
 		routineObjects := chunkObjectsTrees
-		g.Go(func() error {
+		g.Go(func() (err error) {
 			defer func() {
+				if r := recover(); r != nil {
+					fmt.Fprintf(os.Stderr, "REDACTION PANICKED: %s\n", r)
+					var ok bool
+					if err, ok = r.(error); !ok {
+						err = fmt.Errorf("redaction failed with a panic: %s", r)
+					}
+				}
+
 				<-concurrentGoroutines
 			}()
 			body := make(map[string]interface{}, 2)
 			body["fetchingId"] = fetchingId
 			body["k8sTrees"] = routineObjects
-			err := f.client.
+			err = f.client.
 				NewRequest("POST", fmt.Sprintf("/integrations/k8s/%s/fetching/tree", f.clusterID)).
 				Header("X-Firefly-Redacted", "true").
 				QueryParam("integrationId", f.integrationId).
@@ -669,7 +696,7 @@ func (f *Collector) sendK8sTree(fetchingId string, data []k8stree.ObjectsTree) e
 			log.Info().Str("ClusterId", f.clusterID).Str("FetchingId", fetchingId).
 				Int("ResourcesInPage", len(routineObjects)).
 				Msg("Sent k8s objects trees page successfully")
-			return nil
+			return err
 		})
 	}
 	if err := g.Wait(); err != nil {
