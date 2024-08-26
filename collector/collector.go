@@ -16,11 +16,9 @@ import (
 	"github.com/gofireflyio/k8s-collector/collector/filter"
 	"github.com/gofireflyio/k8s-collector/collector/k8stree"
 	"github.com/ido50/requests"
-	"github.com/infralight/redactor/pkg/gitleaks"
+	"github.com/infralight/redactor/pkg/redactor"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
-	gitleaksConfig "github.com/zricethezav/gitleaks/v8/config"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/mgo.v2/bson"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,6 +48,11 @@ var (
 	FetchingIsDisabled       = errors.New("cannot proceed with asset collection due to a suspension of the integration.\nPlease contact the Firefly support in order to restore your integration.")
 	ClusterUniqueIdDuplicate = errors.New("cannot proceed with asset collection due to a reuse of another cluster configuration.\nPlease contact the Firefly support in order to repair your integration.")
 )
+
+var RedactorOptions = redactor.RedactorOptions{
+	RedactionPlaceholder: "REDACTED-BY-FIREFLY",
+	HashAlgorithm:        redactor.HashAlgorithmSHA256,
+}
 
 // DataCollector is an interface for objects that collect data from K8s-related
 // components such as the Kubernetes API Server or Helm
@@ -94,32 +97,6 @@ type Collector struct {
 }
 
 var clusterIDRegex = regexp.MustCompile(`^[a-z0-9-_]+$`)
-
-var gitleaksCfg gitleaksConfig.Config
-
-func init() {
-	viper.SetConfigFile("gitleaks.toml")
-
-	err := viper.ReadInConfig()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed loading gitleaks config: %s\n", err)
-		os.Exit(1)
-	}
-
-	var vc gitleaksConfig.ViperConfig
-
-	err = viper.Unmarshal(&vc)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed parsing gitleaks config: %s\n", err)
-		os.Exit(1)
-	}
-
-	gitleaksCfg, err = vc.Translate()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed translating gitleaks config: %s\n", err)
-		os.Exit(1)
-	}
-}
 
 // New creates a new instance of the Collector struct. A Kubernetes cluster ID
 // must be provided, together with a configuration object and a list of objects
@@ -379,25 +356,6 @@ func (f *Collector) startNewFetching(clusterUniqueId string) (fetchingId, integr
 	return fetchingId, integrationId, sendTrees, err
 }
 
-func redactSensitiveInformation(r io.Reader, w io.Writer) error {
-	data, err := io.ReadAll(r)
-	if err != nil {
-		return fmt.Errorf("failed reading body: %w", err)
-	}
-
-	_, redactedData, err := gitleaks.Redact(nil, gitleaksCfg, data, "", "REDACTED-BY-FIREFLY")
-	if err != nil {
-		return fmt.Errorf("failed redacting sensitive information: %w", err)
-	}
-
-	_, err = w.Write(redactedData)
-	if err != nil {
-		return fmt.Errorf("failed writing redacted data: %w", err)
-	}
-
-	return nil
-}
-
 func (f *Collector) sendK8sObjects(fetchingId string, data []interface{}) error {
 	if len(data) == 0 {
 		f.conf.Log.Warn().
@@ -437,14 +395,28 @@ func (f *Collector) sendK8sObjects(fetchingId string, data []interface{}) error 
 		concurrentGoroutines <- struct{}{}
 
 		routineObjects := chunkObjects
-		g.Go(func() error {
+		g.Go(func() (err error) {
 			defer func() {
 				<-concurrentGoroutines
+
+				if r := recover(); r != nil {
+					var ok bool
+					if err, ok = r.(error); !ok {
+						err = fmt.Errorf("panic detected: %s", r)
+					}
+
+					log.Error().Err(err).Msg("Panicked while sending k8s objects")
+				}
 			}()
-			body := make(map[string]interface{}, 2)
-			body["fetchingId"] = fetchingId
-			body["k8sObjects"] = routineObjects
-			err := f.client.
+
+			for i, obj := range routineObjects {
+				routineObjects[i], err = redactor.Redact(obj, RedactorOptions)
+				if err != nil {
+					return fmt.Errorf("failed redacting object: %w", err)
+				}
+			}
+
+			err = f.client.
 				NewRequest(
 					"POST",
 					fmt.Sprintf("/integrations/k8s/%s/fetching/objects", f.clusterID),
@@ -453,8 +425,10 @@ func (f *Collector) sendK8sObjects(fetchingId string, data []interface{}) error 
 				QueryParam("integrationId", f.integrationId).
 				ExpectedStatus(http.StatusNoContent).
 				RetryLimit(uint8(f.conf.MongoMaxRetries)).
-				JSONBody(body).
-				ReqBodyProcessor(redactSensitiveInformation).
+				JSONBody(map[string]interface{}{
+					"fetchingId": fetchingId,
+					"k8sObjects": routineObjects,
+				}).
 				Run()
 			if err != nil {
 				log.Err(err).Str("ClusterId", f.clusterID).Str("FetchingId", fetchingId).
@@ -541,21 +515,37 @@ func (f *Collector) sendHelmReleases(
 		concurrentGoroutines <- struct{}{}
 
 		routineObjects := chunkObjects
-		g.Go(func() error {
+		g.Go(func() (err error) {
 			defer func() {
 				<-concurrentGoroutines
+
+				if r := recover(); r != nil {
+					var ok bool
+					if err, ok = r.(error); !ok {
+						err = fmt.Errorf("panic detected: %s", r)
+					}
+
+					log.Error().Err(err).Msg("Panicked while sending helm releases")
+				}
 			}()
-			body := make(map[string]interface{}, 3)
-			body["fetchingId"] = fetchingId
-			body["helmReleases"] = routineObjects
-			body["k8sTypes"] = types
-			err := f.client.
+
+			for i, obj := range routineObjects {
+				routineObjects[i], err = redactor.Redact(obj, RedactorOptions)
+				if err != nil {
+					return fmt.Errorf("failed redacting object: %w", err)
+				}
+			}
+
+			err = f.client.
 				NewRequest("POST", fmt.Sprintf("/integrations/k8s/%s/fetching/helm", f.clusterID)).
 				Header("X-Firefly-Redacted", "true").
 				QueryParam("integrationId", f.integrationId).
 				ExpectedStatus(http.StatusNoContent).
-				JSONBody(body).
-				ReqBodyProcessor(redactSensitiveInformation).
+				JSONBody(map[string]interface{}{
+					"fetchingId":   fetchingId,
+					"helmReleases": routineObjects,
+					"k8sTypes":     types,
+				}).
 				Timeout(f.conf.PageTimeoutDuration).
 				RetryLimit(uint8(f.conf.MongoMaxRetries)).
 				Run()
@@ -639,20 +629,36 @@ func (f *Collector) sendK8sTree(fetchingId string, data []k8stree.ObjectsTree) e
 		concurrentGoroutines <- struct{}{}
 
 		routineObjects := chunkObjectsTrees
-		g.Go(func() error {
+		g.Go(func() (err error) {
 			defer func() {
 				<-concurrentGoroutines
+
+				if r := recover(); r != nil {
+					var ok bool
+					if err, ok = r.(error); !ok {
+						err = fmt.Errorf("panic detected: %s", r)
+					}
+
+					log.Error().Err(err).Msg("Panicked while sending k8s trees")
+				}
 			}()
-			body := make(map[string]interface{}, 2)
-			body["fetchingId"] = fetchingId
-			body["k8sTrees"] = routineObjects
-			err := f.client.
+
+			for i, obj := range routineObjects {
+				routineObjects[i], err = redactor.Redact(obj, RedactorOptions)
+				if err != nil {
+					return fmt.Errorf("failed redacting object: %w", err)
+				}
+			}
+
+			err = f.client.
 				NewRequest("POST", fmt.Sprintf("/integrations/k8s/%s/fetching/tree", f.clusterID)).
 				Header("X-Firefly-Redacted", "true").
 				QueryParam("integrationId", f.integrationId).
 				ExpectedStatus(http.StatusNoContent).
-				JSONBody(body).
-				ReqBodyProcessor(redactSensitiveInformation).
+				JSONBody(map[string]interface{}{
+					"fetchingId": fetchingId,
+					"k8sTrees":   routineObjects,
+				}).
 				Timeout(f.conf.PageTimeoutDuration).
 				RetryLimit(uint8(f.conf.MongoMaxRetries)).
 				Run()
