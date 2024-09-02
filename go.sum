@@ -826,8 +826,8 @@ github.com/imdario/mergo v0.3.12/go.mod h1:jmQim1M+e3UYxmgPu/WyfjB3N3VflVyUjjjwH
 github.com/inconshreveable/mousetrap v1.0.0 h1:Z8tu5sraLXCXIcARxBp/8cbvlwVa7Z1NHg9XEKhtSvM=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/infralight/go-kit v1.409.0/go.mod h1:3kSXtPg1ecWs5izQqS/vMGeiXk4q4Nz7d7BIcRLMeRc=
-github.com/infralight/redactor/pkg v0.0.20-0.20240826132026-931bdc9e0778 h1:aD7CzV62aM3KOWAtEbYB2CknGHGaD1WosOW/Bll573c=
-github.com/infralight/redactor/pkg v0.0.20-0.20240826132026-931bdc9e0778/go.mod h1:s7W3RsY1tPAgNgE9wAD1uD1suW3e32f0m6XspGr3SOw=
+github.com/infralight/redactor/pkg v0.0.22-0.20240902171424-605203b8ac65 h1:8kC0aWX0kmYCbP+WOwiCrDmVeLJ/oiDP46dvvW1+1Eo=
+github.com/infralight/redactor/pkg v0.0.22-0.20240902171424-605203b8ac65/go.mod h1:s7W3RsY1tPAgNgE9wAD1uD1suW3e32f0m6XspGr3SOw=
 github.com/intel/goresctrl v0.2.0/go.mod h1:+CZdzouYFn5EsxgqAQTEzMfwKwuc0fVdMrT9FCCAVRQ=
 github.com/j-keck/arping v0.0.0-20160618110441-2cf9dc699c56/go.mod h1:ymszkNOg6tORTn+6F6j+Jc8TOr5osrynvN6ivFWZ2GA=
 github.com/j-keck/arping v1.0.2/go.mod h1:aJbELhR92bSk7tp79AWM/ftfc90EfEi2bQJrbBFOsPw=

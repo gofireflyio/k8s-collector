@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/ido50/requests v1.6.0
-	github.com/infralight/redactor/pkg v0.0.20-0.20240826132026-931bdc9e0778
+	github.com/infralight/redactor/pkg v0.0.22-0.20240902171424-605203b8ac65
 	github.com/jgroeneveld/trial v2.0.0+incompatible
 	github.com/rs/zerolog v1.30.0
 	github.com/thoas/go-funk v0.9.2
