@@ -72,7 +72,6 @@ resources:
     memory: "512Mi"
     ephemeralStorage: "256Mi"
   limits:
-    cpu: "1.0"
     memory: "2048Mi"
     ephemeralStorage: "512Mi"
 
