@@ -70,7 +70,6 @@ resources:
   requests:
     cpu: "1.0"
     memory: "512Mi"
-    ephemeralStorage: "256Mi"
 
 # apiEndpoint is the URL to Firefly's API. Leave empty unless you have a
 # specific reason to change this.
