@@ -22,9 +22,9 @@ spec:
         - name: integration-onboarding
           image: "{{ .Values.offBoarderImage.repository }}:{{ .Values.offBoarderImage.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-{{- if .Values.initContainers.resources }}
+{{- if .Values.resources }}
           resources:
-{{- toYaml .Values.initContainers.resources | nindent 12 }}
+{{- toYaml .Values.resources | nindent 12 }}
 {{- end }}
           env:
             - name: ACCESS_KEY
