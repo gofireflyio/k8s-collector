@@ -71,9 +71,6 @@ resources:
     cpu: "1.0"
     memory: "512Mi"
     ephemeralStorage: "256Mi"
-  limits:
-    memory: "2048Mi"
-    ephemeralStorage: "512Mi"
 
 # apiEndpoint is the URL to Firefly's API. Leave empty unless you have a
 # specific reason to change this.
