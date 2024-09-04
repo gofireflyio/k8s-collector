@@ -48,13 +48,10 @@ spec:
               volumeMounts:
                 - name: config-volume
                   mountPath: /etc/config
+{{- if .Values.resources }}
               resources:
-                requests:
-                  cpu: {{ .Values.resources.requests.cpu }}
-                  memory: {{ .Values.resources.requests.memory }}
-                limits:
-                  cpu: {{ .Values.resources.limits.cpu }}
-                  memory: {{ .Values.resources.limits.memory }}
+{{- toYaml .Values.resources | nindent 16 }}
+{{- end }}                  
 {{ if .Values.argocd.enabled }}
             - name: {{ template "fireFlyArgocdContainerName" . }}
               image: "{{ .Values.argocd.image.repository }}:{{ .Values.argocd.image.tag | default .Chart.AppVersion }}"
@@ -91,15 +88,10 @@ spec:
                 - name: argocd-config-volume
                   mountPath: "{{ .Values.argocd.crawlerLocalPath }}/crawler.json"
                   subPath: "crawler.json"
+{{- if .Values.resources }}
               resources:
-                requests:
-                  cpu: {{ .Values.resources.requests.cpu }}
-                  memory: {{ .Values.resources.requests.memory }}
-                  ephemeral-storage: {{ .Values.resources.requests.ephemeralStorage}}
-                limits:
-                  cpu: {{ .Values.resources.limits.cpu }}
-                  memory: {{ .Values.resources.limits.memory }}
-                  ephemeral-storage: {{ .Values.resources.requests.ephemeralStorage}}
+{{- toYaml $.Values.resources | nindent 16 }}
+{{- end }}
 {{ end }}
           volumes:
             - name: config-volume
