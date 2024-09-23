@@ -215,7 +215,7 @@ a [204 No Content](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/204)
    you can also run it out-of-cluster at will, directly from the code. Simply
    execute:
    ```sh
-   FIREFLY_ACCESS_KEY=<accessKey> FIREFLY_SECRET_KEY=<secretKey> \
+   INFRALIGHT_ACCESS_KEY=<accessKey> INFRALIGHT_SECRET_KEY=<secretKey> \
        go run main.go \
        -external ~/.kube/config \
        -config `pwd`/.config \
