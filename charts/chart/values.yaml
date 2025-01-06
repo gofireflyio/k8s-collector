@@ -99,7 +99,8 @@ removeTypes: [ ]
 # addTypes accepts a list of resource types that should be added to the default
 # list of allowed resources. This is mostly useful for CRDs.
 addTypes: [ ]
-
+tolerations: []
+nodeSelector: {}
 # DEPRECATED: collectSecrets is a boolean value indicating whether the collector
 # should collect secrets from the cluster. This value is deprecated in favor of
 # the addTypes value.
