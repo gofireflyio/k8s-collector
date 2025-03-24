@@ -18,6 +18,14 @@ spec:
           securityContext:
             runAsNonRoot: true
           serviceAccountName: {{ .Values.serviceAccount.name }}
+{{- if .Values.nodeSelector }}
+          nodeSelector:
+{{- toYaml .Values.nodeSelector | nindent 12 }}
+{{- end }}
+{{- if .Values.tolerations }}
+          tolerations:
+{{- toYaml .Values.tolerations | nindent 12 }}
+{{- end }}
           containers:
             - name: {{ template "fireFlyCollectorContaierName" . }}
               image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
