@@ -40,16 +40,6 @@ spec:
                   valueFrom:
                     secretKeyRef:
                       name: {{ template "fireFlyCredentialsSecret" . }}
-                      key: secretKey              
-                - name: FIREFLY_ACCESS_KEY
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ template "fireFlyCredentialsSecret" . }}
-                      key: accessKey
-                - name: FIREFLY_SECRET_KEY
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ template "fireFlyCredentialsSecret" . }}
                       key: secretKey
                 - name: CLUSTER_ID
                   value: {{ .Values.clusterId }}
