@@ -679,7 +679,7 @@ func (f *Collector) sendCollectorMetadata(
 			Err(err).
 			Msg("Failed getting Kubernetes server version")
 	} else {
-		body["serverVersion"] = serverVersion.String()
+		body["serverVersion"] = serverVersion
 	}
 
 	if runErr != nil {
