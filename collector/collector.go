@@ -679,6 +679,8 @@ func (f *Collector) sendCollectorMetadata(
 			Err(err).
 			Msg("Failed getting Kubernetes server version")
 	} else {
+
+		f.conf.Log.Info().Interface("serverVersion", serverVersion.String()).Msg("Kubernetes server version")
 		body["serverVersion"] = serverVersion
 	}
 
