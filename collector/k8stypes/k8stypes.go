@@ -3,11 +3,13 @@ package k8stypes
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
+	"github.com/gofireflyio/k8s-collector/collector/common"
 	"github.com/gofireflyio/k8s-collector/collector/config"
 )
 
@@ -56,14 +58,17 @@ func (f *Collector) Source() string {
 func (f *Collector) Run(ctx context.Context, conf *config.Config) (
 	keyName string,
 	types []interface{},
+	stats common.CollectionStats,
 	err error,
 ) {
 	log.Debug().Msg("Starting collect Kubernetes supported types")
 	var supportedResources []map[string]interface{}
 
+	startCollectTm := time.Now().UTC()
+
 	_, apiGroups, err := f.api.Discovery().ServerGroupsAndResources()
 	if err != nil {
-		return "", nil, err
+		return "", nil, stats, err
 	}
 	for _, apiGroup := range apiGroups {
 		if len(apiGroup.APIResources) == 0 {
@@ -83,7 +88,9 @@ func (f *Collector) Run(ctx context.Context, conf *config.Config) (
 		types[i] = rel
 	}
 
+	stats.CollectionTime = time.Now().UTC().Sub(startCollectTm)
+
 	log.Info().Int("amount", len(supportedResources)).Msg("Finished collecting Kubernetes supported types")
 
-	return "k8s_types", types, nil
+	return "k8s_types", types, stats, nil
 }

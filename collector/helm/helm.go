@@ -3,7 +3,9 @@ package helm
 import (
 	"context"
 	"fmt"
+	"github.com/gofireflyio/k8s-collector/collector/common"
 	"os"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"helm.sh/helm/v3/pkg/action"
@@ -59,18 +61,24 @@ func (c *Collector) Source() string {
 // Run executes the collector with the provided configuration object, and
 // returns a list of collected Helm releases from the Kubernetes cluster.
 func (c *Collector) Run(ctx context.Context, _ *config.Config) (
-    keyName string,
-    data []interface{},
-    err error,
+	keyName string,
+	data []interface{},
+	stats common.CollectionStats,
+	err error,
 ) {
 	log.Debug().Msg("Starting collect Helm repositories")
+
+	startCollectTm := time.Now().UTC()
+
 	client := action.NewList(c.sdkConfig)
 	client.Deployed = true
 
 	results, err := client.Run()
 	if err != nil {
-		return "helm_releases", data, fmt.Errorf("list failed: %w", err)
+		return "helm_releases", data, stats, fmt.Errorf("list failed: %w", err)
 	}
+
+	stats.CollectionTime = time.Now().UTC().Sub(startCollectTm)
 
 	releases := make([]interface{}, len(results))
 	for i, rel := range results {
@@ -80,7 +88,7 @@ func (c *Collector) Run(ctx context.Context, _ *config.Config) (
 
 	log.Info().Int("amount", len(releases)).Msg("Finished collecting Helm repositories")
 
-	return "helm_releases", releases, nil
+	return "helm_releases", releases, stats, nil
 }
 
 func formatCrds(release *release.Release) string {

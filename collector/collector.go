@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gofireflyio/k8s-collector/collector/common"
 	"io"
 	"net/http"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gofireflyio/k8s-collector/collector/config"
 	"github.com/gofireflyio/k8s-collector/collector/filter"
@@ -56,11 +58,12 @@ type DataCollector interface {
 
 	// Run executes the data collector. The configuration object is always passed
 	// and is never empty or nil. Every collector must return a name for the
-	// key under which the data will be sent to the Infralight App Server, the
+	// key under which the data will be sent to the Firefly App Server, the
 	// data itself (which is a list of arbitrary objects), and an optional error.
 	Run(context.Context, *config.Config) (
 		keyName string,
 		data []interface{},
+		stats common.CollectionStats,
 		err error,
 	)
 }
@@ -68,7 +71,7 @@ type DataCollector interface {
 // Collector is an execution-scoped object encapsulating the entire collection
 // process.
 type Collector struct {
-	// the JWT access token used to authenticate with the Infralight App server.
+	// the JWT access token used to authenticate with the Firefly App server.
 	// this is automatically generated
 	accessToken string
 
@@ -86,6 +89,7 @@ type Collector struct {
 
 	log            *zerolog.Logger
 	client         *requests.HTTPClient
+	k8sClient      kubernetes.Interface
 	dataCollectors []DataCollector
 	dataFilters    []filter.DataFilter
 }
@@ -104,6 +108,7 @@ func New(
 	clusterID string,
 	clusterConfig *rest.Config,
 	conf *config.Config,
+	k8sClient kubernetes.Interface,
 	dataCollectors ...DataCollector,
 ) *Collector {
 	if conf == nil {
@@ -115,15 +120,18 @@ func New(
 		log:            conf.Log,
 		clusterConfig:  clusterConfig,
 		clusterID:      clusterID,
+		k8sClient:      k8sClient,
 		dataCollectors: dataCollectors,
 		dataFilters:    filter.All,
 	}
 }
 
 // Run executes the collector. The process includes authentication with the
-// Infralight App Server, execution of all data collectors, and sending of the
+// Firefly App Server, execution of all data collectors, and sending of the
 // data to the App Server for storage.
 func (f *Collector) Run(ctx context.Context) (err error) {
+	startDate := time.Now().UTC()
+
 	// verify cluster ID is valid
 	if !clusterIDRegex.MatchString(f.clusterID) {
 		return fmt.Errorf("invalid cluster ID, must match %s", clusterIDRegex)
@@ -131,16 +139,16 @@ func (f *Collector) Run(ctx context.Context) (err error) {
 
 	f.log.Info().Str("Firefly Login Endpoint", f.conf.LoginEndpoint).Str("Firefly Endpoint", f.conf.Endpoint).Msg("Starting")
 
-	// authenticate with the Infralight API
+	// authenticate with the Firefly API
 	if f.conf.DryRun {
 		log.Info().Msg("Skipping authentication due to dry-run")
 	} else {
 		err = f.authenticate()
 		if err != nil {
-			return fmt.Errorf("failed authenticating with Infralight API: %w", err)
+			return fmt.Errorf("failed authenticating with Firefly API: %w", err)
 		}
 
-		f.log.Info().Msg("Authenticated to Infralight App Server successfully")
+		f.log.Info().Msg("Authenticated to Firefly App Server successfully")
 	}
 
 	var uniqueClusterId, fetchingId, integrationId string
@@ -167,29 +175,48 @@ func (f *Collector) Run(ctx context.Context) (err error) {
 				f.log.Info().Msgf("%s", err.Error())
 				return nil
 			}
-			return fmt.Errorf("failed starting new fetching with Infralight API: %w", err)
+			return fmt.Errorf("failed starting new fetching with Firefly API: %w", err)
 		}
 	}
 
 	f.integrationId = integrationId
 
-	log := f.log.With().
+	logger := f.log.With().
 		Str("fetchingId", fetchingId).
 		Str("integrationId", integrationId).
 		Str("uniqueClusterId", uniqueClusterId).
 		Logger()
 
-	log.Info().Msg("Starting new fetching process")
+	logger.Info().Msg("Starting new fetching process")
 
 	fullData := make(map[string][]interface{}, len(f.dataCollectors))
+	fullStats := make(map[string]common.CollectionStats, len(f.dataCollectors))
 
-	log.Debug().Int("amount", len(f.dataCollectors)).Msg("Running Kubernetes collectors")
+	logger.Debug().Int("amount", len(f.dataCollectors)).Msg("Running Kubernetes collectors")
+
+	defer func() {
+		// When the collection run finishes, whether successfully or not, send
+		// metadata about the collector and the run to the k8s-api. This
+		// function captures the value of the err variable, so it's important to
+		// always assign errors directly to that variable and return it directly.
+		fErr := f.sendCollectorMetadata(
+			fetchingId,
+			startDate,
+			time.Now().UTC(),
+			fullStats,
+			err,
+		)
+		if fErr != nil {
+			// log but do not fail, this is not critical
+			log.Warn().Err(fErr).Msg("Failed sending collector metadata")
+		}
+	}()
 
 	for _, dc := range f.dataCollectors {
-		keyName, data, err := dc.Run(ctx, f.conf)
-		if err != nil {
+		keyName, data, stats, dcErr := dc.Run(ctx, f.conf)
+		if dcErr != nil {
 			if keyName == "helm_releases" {
-				log.Warn().Err(err).Msg("Failed fetching helm releases")
+				logger.Warn().Err(dcErr).Msg("Failed fetching helm releases")
 				fullData[keyName] = data
 				continue
 			}
@@ -197,13 +224,14 @@ func (f *Collector) Run(ctx context.Context) (err error) {
 		}
 
 		fullData[keyName] = data
+		fullStats[keyName] = stats
 	}
 
-	for _, filter := range f.dataFilters {
-		log.Debug().Msg("Running filter")
-		err := filter(ctx, fullData)
+	for _, fl := range f.dataFilters {
+		logger.Debug().Msg("Running filter")
+		err = fl(ctx, fullData)
 		if err != nil {
-			log.Warn().Err(err).Msg("Filter failed")
+			logger.Warn().Err(err).Msg("Filter failed")
 			continue
 		}
 	}
@@ -218,11 +246,11 @@ func (f *Collector) Run(ctx context.Context) (err error) {
 		return nil
 	}
 
-	log.Debug().Msg("Sending data to Infralight App Server")
+	logger.Debug().Msg("Sending data to Firefly App Server")
 
 	err = f.sendHelmReleases(fetchingId, fullData["helm_releases"], fullData["k8s_types"])
 	if err != nil {
-		return fmt.Errorf("failed sending releases to Infralight: %w", err)
+		return fmt.Errorf("failed sending releases to Firefly: %w", err)
 	}
 
 	if sendTrees {
@@ -233,15 +261,15 @@ func (f *Collector) Run(ctx context.Context) (err error) {
 
 		err = f.sendK8sTree(fetchingId, k8sTree)
 		if err != nil {
-			return fmt.Errorf("failed sending k8s objects tree to Infralight: %w", err)
+			return fmt.Errorf("failed sending k8s objects tree to Firefly: %w", err)
 		}
 	} else {
-		log.Info().Msg("skipping send trees")
+		logger.Info().Msg("skipping send trees")
 	}
 
 	err = f.sendK8sObjects(fetchingId, fullData["k8s_objects"])
 	if err != nil {
-		return fmt.Errorf("failed sending objects to Infralight: %w", err)
+		return fmt.Errorf("failed sending objects to Firefly: %w", err)
 	}
 
 	return nil
@@ -354,12 +382,12 @@ func (f *Collector) sendK8sObjects(fetchingId string, data []interface{}) error 
 	if len(data) == 0 {
 		f.conf.Log.Warn().
 			Str("FetchingId", fetchingId).
-			Msg("No k8s objects to send to Infralight")
+			Msg("No k8s objects to send to Firefly")
 		return nil
 	}
 	f.conf.Log.Debug().
 		Int("TotalObjects", len(data)).
-		Msg("Sending collected data to Infralight")
+		Msg("Sending collected data to Firefly")
 
 	totalBytes := 0
 	var chunks [][]interface{}
@@ -461,13 +489,13 @@ func (f *Collector) sendHelmReleases(
 	if len(data) == 0 {
 		f.conf.Log.Warn().
 			Str("FetchingId", fetchingId).
-			Msg("No helm releases to send to Infralight")
+			Msg("No helm releases to send to Firefly")
 		return nil
 	}
 	f.conf.Log.Debug().
 		Str("FetchingId", fetchingId).
 		Int("HelmReleases", len(data)).
-		Msg("Sending collected helm releases to Infralight")
+		Msg("Sending collected helm releases to Firefly")
 
 	totalBytes := 0
 	var chunks [][]interface{}
@@ -534,13 +562,13 @@ func (f *Collector) sendK8sTree(fetchingId string, data []k8stree.ObjectsTree) e
 	if len(data) == 0 {
 		f.conf.Log.Warn().
 			Str("FetchingId", fetchingId).
-			Msg("No k8s objects trees to send to Infralight")
+			Msg("No k8s objects trees to send to Firefly")
 		return nil
 	}
 	f.conf.Log.Debug().
 		Str("FetchingId", fetchingId).
 		Int("Trees", len(data)).
-		Msg("Sending collected data to Infralight")
+		Msg("Sending collected data to Firefly")
 
 	totalBytes := 0
 	var chunks [][]interface{}
@@ -623,4 +651,50 @@ func (f *Collector) sendK8sTree(fetchingId string, data []k8stree.ObjectsTree) e
 		Int("Resources", len(data)).
 		Msg("Sent k8s objects trees page successfully")
 	return nil
+}
+
+func (f *Collector) sendCollectorMetadata(
+	fetchingId string,
+	startDate time.Time,
+	endDate time.Time,
+	stats map[string]common.CollectionStats,
+	runErr error,
+) error {
+	f.conf.Log.Debug().
+		Msg("Sending metadata to Firefly")
+
+	body := map[string]interface{}{
+		"fetchingId":       fetchingId,
+		"startDate":        startDate.Format(time.RFC3339),
+		"endDate":          endDate.Format(time.RFC3339),
+		"result":           "success",
+		"collectorVersion": Version,
+		"collectionStats":  stats,
+	}
+
+	serverVersion, err := f.k8sClient.Discovery().ServerVersion()
+	if err != nil {
+		// Log this but do not fail
+		f.conf.Log.Warn().
+			Err(err).
+			Msg("Failed getting Kubernetes server version")
+	} else {
+		body["serverVersion"] = serverVersion.String()
+	}
+
+	if runErr != nil {
+		body["result"] = "failure"
+		body["error"] = runErr.Error()
+	}
+
+	return f.client.
+		NewRequest(
+			"POST",
+			fmt.Sprintf("/integrations/k8s/%s/fetching/metadata", f.clusterID),
+		).
+		QueryParam("integrationId", f.integrationId).
+		ExpectedStatus(http.StatusNoContent).
+		RetryLimit(uint8(f.conf.MongoMaxRetries)).
+		JSONBody(body).
+		Run()
 }

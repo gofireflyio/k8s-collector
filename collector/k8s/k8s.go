@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gofireflyio/k8s-collector/collector/common"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"k8s.io/client-go/kubernetes"
@@ -72,13 +74,16 @@ type KubernetesObject struct {
 func (f *Collector) Run(ctx context.Context, conf *config.Config) (
 	keyName string,
 	objects []interface{},
+	stats common.CollectionStats,
 	err error,
 ) {
 	log.Debug().Msg("Starting collect Kubernetes objects")
 
+	startCollectTm := time.Now().UTC()
+
 	apiResourcesList, err := f.api.Discovery().ServerPreferredResources()
 	if err != nil {
-		return "k8s_objects", nil, fmt.Errorf("failed receiving Kubernetes resources: %w", err)
+		return "k8s_objects", nil, stats, fmt.Errorf("failed receiving Kubernetes resources: %w", err)
 	}
 
 	for _, apiResource := range apiResourcesList {
@@ -174,12 +179,14 @@ func (f *Collector) Run(ctx context.Context, conf *config.Config) (
 		}
 	}
 
+	stats.CollectionTime = time.Now().UTC().Sub(startCollectTm)
+
 	log.Info().
 		Int("items", len(objects)).
 		Int("apis", len(apiResourcesList)).
 		Msg("Finished Kubernetes cluster fetching")
 
-	return "k8s_objects", objects, nil
+	return "k8s_objects", objects, stats, nil
 }
 
 func isCoreAPIGroup(groupVersion string) bool {

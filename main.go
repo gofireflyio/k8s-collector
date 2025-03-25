@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/thoas/go-funk"
-	"io/ioutil"
 	v1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -143,7 +142,7 @@ func main() {
 	}
 
 	err = collector.
-		New(clusterID, apiConfig, conf, k8sCollector, helmCollector, k8sTypesCollector).
+		New(clusterID, apiConfig, conf, kClient, k8sCollector, helmCollector, k8sTypesCollector).
 		Run(context.TODO())
 	if err != nil {
 		logger.Fatal().
@@ -193,7 +192,7 @@ func Namespace() string {
 	}
 
 	// Fall back to the namespace associated with the service account token, if available
-	if data, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); err == nil {
+	if data, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); err == nil {
 		if ns := strings.TrimSpace(string(data)); len(ns) > 0 {
 			return ns
 		}
