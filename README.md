@@ -92,7 +92,7 @@ dashes and underscore (spaces are not allowed).
 The collector must also be configured with an Firefly-provided access and secret
 keys in order to be able to send data to Firefly. These keys are stored by the
 chart as Kubernetes Secrets, and provided to the collector via the
-`INFRALIGHT_ACCESS_KEY` and `INFRALIGHT_SECRET_KEY` environment variables,
+`FIREFLY_ACCESS_KEY` and `FIREFLY_SECRET_KEY` environment variables,
 respectively.
 
 The collector's behavior may also be configured and modified via an optional
