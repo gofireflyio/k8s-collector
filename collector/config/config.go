@@ -29,7 +29,7 @@ const (
 	DefaultFireflyAPI = "https://gateway.firefly.ai"
 
 	// DefaultFireflyLoginAPI is the default URL for Firefly's Login API
-	DefaultFireflyLoginAPI = "https://gateway.firefly.ai"
+	DefaultFireflyLoginAPI = "https://prod.external.api.infralight.cloud"
 )
 
 var (

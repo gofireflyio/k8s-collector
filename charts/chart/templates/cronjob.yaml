@@ -40,6 +40,7 @@ spec:
                   valueFrom:
                     secretKeyRef:
                       name: {{ template "fireFlyCredentialsSecret" . }}
+                      key: secretKey
                 - name: CLUSTER_ID
                   value: {{ .Values.clusterId }}
               volumeMounts:
@@ -78,7 +79,7 @@ spec:
                 - name: IACATHON_ARGOCD_INSECURE
                   value: {{ quote .Values.argocd.insecure }}
                 - name: IACATHON_ARGOCD_DISABLE_PLAINTEXT
-                  value: {{ quote .Values.argocd.disablePlaintext }}                  
+                  value: {{ quote .Values.argocd.disablePlaintext }}
                 - name: REMOTE_BUCKET
                   value: {{ quote .Values.argocd.saveToRemoteBucket}}
               envFrom:
