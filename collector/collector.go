@@ -670,16 +670,7 @@ func (f *Collector) sendCollectorMetadata(
 		"result":           "success",
 		"collectorVersion": Version,
 		"collectorStats":   stats,
-	}
-
-	serverVersion, err := f.k8sClient.Discovery().ServerVersion()
-	if err != nil {
-		// Log this but do not fail
-		f.conf.Log.Warn().
-			Err(err).
-			Msg("Failed getting Kubernetes server version")
-	} else {
-		body["serverVersion"] = serverVersion.String()
+		"serverVersion":    "1.21.0",
 	}
 
 	if runErr != nil {
