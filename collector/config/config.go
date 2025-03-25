@@ -29,18 +29,13 @@ const (
 	DefaultFireflyAPI = "https://gateway.firefly.ai"
 
 	// DefaultFireflyLoginAPI is the default URL for Firefly's Login API
-	DefaultFireflyLoginAPI = "https://gateway.firefly.ai"
+	DefaultFireflyLoginAPI = "https://prod.external.api.infralight.cloud"
 )
 
 var (
 	// ErrAccessKeys is an error returned when the environment variables for the
 	// access and secret keys are not provided or empty.
 	ErrAccessKeys = errors.New("access and secret keys must be provided")
-
-	// ErrEndpoint is an error returned when the configuration directory is
-	// missing an endpoint setting (endpoint is the URL to the Infralight App
-	// Server).
-	ErrEndpoint = errors.New("infralight endpoint must be provided")
 
 	// DefaultResourceTypes is the list of Kubernetes resources that are
 	// to be collected by default (i.e. if there is no configuration at all)
