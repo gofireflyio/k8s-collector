@@ -14,22 +14,22 @@ import (
 
 const (
 	// AccessKeyEnvVar is the name of the environment variable where the access
-	// key to the Infralight App Server must be provided
-	AccessKeyEnvVar = "INFRALIGHT_ACCESS_KEY"
+	// key to the Firefly App Server must be provided
+	AccessKeyEnvVar = "FIREFLY_ACCESS_KEY"
 
 	// SecretKeyEnvVar is the name of the environment variable where the secret
-	// key to the Infralight App Server must be provided
-	SecretKeyEnvVar = "INFRALIGHT_SECRET_KEY" // nolint: gosec
+	// key to the Firefly App Server must be provided
+	SecretKeyEnvVar = "FIREFLY_SECRET_KEY" // nolint: gosec
 
 	// DefaultConfigDir is the path to the default directory where configuration
 	// files (generally mounted from a Kubernetes ConfigMap) must be present.
 	DefaultConfigDir = "/etc/config"
 
 	// DefaultFireflyAPI is the default URL for Firefly's API
-	DefaultFireflyAPI = "https://k8s-api.prod.external.api.infralight.cloud"
+	DefaultFireflyAPI = "https://gateway.firefly.ai"
 
 	// DefaultFireflyLoginAPI is the default URL for Firefly's Login API
-	DefaultFireflyLoginAPI = "https://prod.external.api.infralight.cloud"
+	DefaultFireflyLoginAPI = "https://gateway.firefly.ai"
 )
 
 var (
@@ -40,7 +40,7 @@ var (
 	// ErrEndpoint is an error returned when the configuration directory is
 	// missing an endpoint setting (endpoint is the URL to the Infralight App
 	// Server).
-	ErrEndpoint = errors.New("Infralight endpoint must be provided")
+	ErrEndpoint = errors.New("infralight endpoint must be provided")
 
 	// DefaultResourceTypes is the list of Kubernetes resources that are
 	// to be collected by default (i.e. if there is no configuration at all)
@@ -96,7 +96,7 @@ var (
 )
 
 // Config represents configuration to the collector library. It is shared
-// between the different data collectors (impementing the collector.DataCollector
+// between the different data collectors (implementing the collector.DataCollector
 // interface).
 type Config struct {
 	// File system object from which configuration files are read. by default,
@@ -129,7 +129,7 @@ type Config struct {
 	// LoginEndpoint is the URL to login Infralight Service
 	LoginEndpoint string
 
-	// Namespace is the Kubernets namespace we're collecting data from (if empty,
+	// Namespace is the Kubernetes namespace we're collecting data from (if empty,
 	// all namespaces are collected)
 	Namespace string
 
@@ -344,5 +344,5 @@ func (fs *localFS) Open(name string) (fs.File, error) {
 }
 
 func isOldEndpoint(endpoint string) bool {
-	return endpoint == "https://prodapi.infralight.cloud/api"
+	return endpoint == "https://gateway.firefly.ai/api"
 }

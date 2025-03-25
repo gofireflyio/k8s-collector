@@ -42,7 +42,18 @@ func main() {
 	)
 	configDir := flag.String("config", "/etc/config", "configuration files directory")
 	dryRun := flag.Bool("dry-run", false, "dry run (do not send anything to Firefly)")
+	version := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
+
+	if *version {
+		fmt.Printf(
+			"Firefly k8s-collector v%s, commit: %s, compiled %s\n",
+			collector.Version,
+			collector.CommitHash,
+			collector.BuildDate,
+		)
+		os.Exit(0)
+	}
 
 	// Initiate a logger
 	logger := loadLogger(*debug)

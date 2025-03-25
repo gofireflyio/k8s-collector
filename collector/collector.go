@@ -25,6 +25,19 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+var (
+	// Version is the version number of the collector. It is automatically
+	// injected during build time via the Dockerfile (and the GitHub deployment
+	// workflow).
+	Version = "dev"
+
+	// BuildDate is the date of the build. Automatically injected.
+	BuildDate = ""
+
+	// CommitHash is the Git commit hash. Automatically injected.
+	CommitHash = "HEAD"
+)
+
 const (
 	MaxItemSize = 1024 * 1500
 )
@@ -257,6 +270,7 @@ func (f *Collector) authenticate() (err error) {
 		Timeout(f.conf.PageTimeoutDuration).
 		RetryLimit(uint8(f.conf.MongoMaxRetries)).
 		Header("Authorization", fmt.Sprintf("Bearer %s", credentials.Token)).
+		Header("User-Agent", fmt.Sprintf("k8s-collector v%s", Version)).
 		CompressWith(requests.CompressionAlgorithmGzip).
 		ErrorHandler(func(httpStatus int, contentType string, body io.Reader) error {
 			if httpStatus == http.StatusTooEarly {
@@ -276,12 +290,12 @@ func (f *Collector) authenticate() (err error) {
 func (f *Collector) getUniqueClusterId(ctx context.Context) (clusterId string, err error) {
 	kubeApi, err := kubernetes.NewForConfig(f.clusterConfig)
 	if err != nil {
-		return clusterId, fmt.Errorf("Failed creating Kubernetes Api object: %w", err)
+		return clusterId, fmt.Errorf("failed creating Kubernetes Api object: %w", err)
 	}
 
 	kubeSystemNs, err := kubeApi.CoreV1().Namespaces().Get(ctx, "kube-system", metav1.GetOptions{})
 	if err != nil {
-		return clusterId, fmt.Errorf("Failed finding `kube-system` Kubernetes namespace: %w", err)
+		return clusterId, fmt.Errorf("failed finding `kube-system` Kubernetes namespace: %w", err)
 	}
 
 	return string(kubeSystemNs.GetObjectMeta().GetUID()), nil
@@ -289,14 +303,14 @@ func (f *Collector) getUniqueClusterId(ctx context.Context) (clusterId string, e
 
 func (f *Collector) startNewFetching(clusterUniqueId string) (fetchingId, integrationId string, sendTrees bool, err error) {
 	fetchingId = bson.NewObjectId().Hex()
-	var respoonse string
+	var response string
 	req := f.client.
 		NewRequest("GET", fmt.Sprintf("/integrations/k8s/%s/fetching", f.clusterID)).
 		QueryParam("clusterUniqueId", clusterUniqueId).
 		QueryParam("fetchingId", fetchingId).
 		QueryParam("getIntegrationId", "true").
 		ExpectedStatus(http.StatusOK).
-		Into(&respoonse).
+		Into(&response).
 		ErrorHandler(func(httpStatus int, contentType string, body io.Reader) error {
 			if httpStatus == http.StatusTooEarly {
 				return TooEarlyError
@@ -324,28 +338,16 @@ func (f *Collector) startNewFetching(clusterUniqueId string) (fetchingId, integr
 	}
 	err = req.Run()
 
-	responseSpllited := strings.Split(respoonse, ",")
-	integrationId = responseSpllited[0]
+	responseSplit := strings.Split(response, ",")
+	integrationId = responseSplit[0]
 	sendTrees = true
-	if len(responseSpllited) > 1 {
-		if value, err := strconv.ParseBool(responseSpllited[1]); err == nil {
+	if len(responseSplit) > 1 {
+		if value, err := strconv.ParseBool(responseSplit[1]); err == nil {
 			sendTrees = value
 		}
 	}
 
 	return fetchingId, integrationId, sendTrees, err
-}
-
-func (f *Collector) send(data map[string]interface{}) error {
-	f.conf.Log.Debug().
-		Interface("data", data).
-		Msg("Sending collected data to Infralight")
-
-	return f.client.
-		NewRequest("POST", fmt.Sprintf("/integrations/k8s/%s/fetching", f.clusterID)).
-		ExpectedStatus(http.StatusNoContent).
-		JSONBody(data).
-		Run()
 }
 
 func (f *Collector) sendK8sObjects(fetchingId string, data []interface{}) error {

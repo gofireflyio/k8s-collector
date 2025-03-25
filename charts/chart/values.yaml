@@ -33,32 +33,6 @@ offBoarderImage:
   pullPolicy: Always
   tag: null
 
-argocd:
-  enabled: false
-  insecure: true
-  disablePlaintext: true
-  image:
-    repository: infralightio/self-hosted-redactor
-    pullPolicy: Always
-    tag: latest
-  secretNameOverride:
-  domain: ""
-  token: ""
-  crawlerLocalPath: "/var/tmp"
-  redactorMirrorBucketName: ""
-  redactorMirrorBucketRegion: "us-east-1"
-  saveToRemoteBucket: false
-  logging:
-    remoteHash: ""
-    appLogPath: "/var/tmp"
-    logFile: "crawler.log"
-  metadata:
-    accountId: ""
-    crawlerId: ""
-    location: {}
-    type: "argocd"
-    active: true
-
 serviceAccount:
   name: "infralight-service-account"
   annotations: {}
