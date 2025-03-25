@@ -669,7 +669,7 @@ func (f *Collector) sendCollectorMetadata(
 		"endDate":          endDate.Format(time.RFC3339),
 		"result":           "success",
 		"collectorVersion": Version,
-		"collectionStats":  stats,
+		"collectorStats":   stats,
 	}
 
 	serverVersion, err := f.k8sClient.Discovery().ServerVersion()
