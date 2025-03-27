@@ -40,7 +40,6 @@ argocd:
   image:
     repository: infralightio/self-hosted-redactor
     pullPolicy: Always
-    tag: latest
   secretNameOverride:
   domain: ""
   token: ""

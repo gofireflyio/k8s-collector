@@ -18,6 +18,14 @@ spec:
       name: "off-boarder"
     spec:
       restartPolicy: OnFailure
+{{- if .Values.onBoarder.nodeSelector }}
+      nodeSelector:
+{{- toYaml .Values.onBoarder.nodeSelector | nindent 12 }}
+{{- end }}
+{{- if .Values.onBoarder.tolerations }}
+      tolerations:
+{{- toYaml .Values.onBoarder.tolerations | nindent 12 }}
+{{- end }}
       containers:
         - name: integration-deletion
           image: "{{ .Values.offBoarderImage.repository }}:{{ .Values.offBoarderImage.tag | default .Chart.AppVersion }}"
