@@ -1,0 +1,7 @@
+apiVersion: v2
+name: firefly-k8s-collector
+home: https://github.com/gofireflyio/k8s-collector
+description: Firefly's Kubernetes Collector
+type: application
+version: 1.5.3
+appVersion: "1.5.3"

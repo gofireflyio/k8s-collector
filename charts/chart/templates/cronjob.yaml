@@ -1,0 +1,125 @@
+{{- template "validateClusterId" . -}}
+
+{{- if semverCompare ">=1.21-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: batch/v1
+{{- else -}}
+apiVersion: batch/v1beta1
+{{- end }}
+kind: CronJob
+metadata:
+  name: {{ template "fireFlyCollectorCrojobName" . }}
+spec:
+  schedule: "{{ .Values.schedule }}"
+  concurrencyPolicy: "Forbid"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+          serviceAccountName: {{ .Values.serviceAccount.name }}
+{{- if .Values.nodeSelector }}
+          nodeSelector:
+{{- toYaml .Values.nodeSelector | nindent 12 }}
+{{- end }}
+{{- if .Values.tolerations }}
+          tolerations:
+{{- toYaml .Values.tolerations | nindent 12 }}
+{{- end }}
+          containers:
+            - name: {{ template "fireFlyCollectorContaierName" . }}
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              env:
+                - name: INFRALIGHT_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ template "fireFlyCredentialsSecret" . }}
+                      key: accessKey
+                - name: INFRALIGHT_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ template "fireFlyCredentialsSecret" . }}
+                      key: secretKey              
+                - name: FIREFLY_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ template "fireFlyCredentialsSecret" . }}
+                      key: accessKey
+                - name: FIREFLY_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ template "fireFlyCredentialsSecret" . }}
+                      key: secretKey
+                - name: CLUSTER_ID
+                  value: {{ .Values.clusterId }}
+              volumeMounts:
+                - name: config-volume
+                  mountPath: /etc/config
+              resources:
+                requests:
+                  cpu: {{ .Values.resources.requests.cpu }}
+                  memory: {{ .Values.resources.requests.memory }}
+                limits:
+                  cpu: {{ .Values.resources.limits.cpu }}
+                  memory: {{ .Values.resources.limits.memory }}
+{{ if .Values.argocd.enabled }}
+            - name: {{ template "fireFlyArgocdContainerName" . }}
+              image: "{{ .Values.argocd.image.repository }}:{{ .Values.argocd.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.argocd.image.pullPolicy }}
+              env:
+                - name: FIREFLY_ACCOUNT_ID
+                  value: {{ .Values.argocd.metadata.accountId }}
+                - name: FIREFLY_CRAWLER_ID
+                  value: {{ .Values.argocd.metadata.crawlerId }}
+                - name: LOCAL_CRAWLER_PATH
+                  value: "{{ .Values.argocd.crawlerLocalPath }}/crawler.json"
+                - name: SAAS_MODE
+                  value: "false"
+                - name: STATES_BUCKET
+                  value: {{ .Values.argocd.redactorMirrorBucketName }}
+                - name: AWS_REGION
+                  value: {{ .Values.argocd.redactorMirrorBucketRegion }}
+                - name: LOCAL_LOG_PATH
+                  value: {{ .Values.argocd.logging.appLogPath }}/{{ .Values.argocd.logging.logFile }}
+                - name: REMOTE_LOG_HASH
+                  value: {{ .Values.argocd.logging.remoteHash }}
+                - name: IACATHON_ARGOCD_DOMAIN
+                  value: {{ .Values.argocd.domain }}
+                - name: IACATHON_ARGOCD_INSECURE
+                  value: {{ quote .Values.argocd.insecure }}
+                - name: IACATHON_ARGOCD_DISABLE_PLAINTEXT
+                  value: {{ quote .Values.argocd.disablePlaintext }}                  
+                - name: REMOTE_BUCKET
+                  value: {{ quote .Values.argocd.saveToRemoteBucket}}
+                - name: CRAWLER_INITIAL_SCAN_LIMIT
+                  value: "1000"
+                - name: CRAWLER_MAX_SCAN_LIMIT
+                  value: "1000000"
+              envFrom:
+                - secretRef:
+                    name: {{ template "fireFlyArgocdCredentials" .}}
+              volumeMounts:
+                - name: argocd-config-volume
+                  mountPath: "{{ .Values.argocd.crawlerLocalPath }}/crawler.json"
+                  subPath: "crawler.json"
+              resources:
+                requests:
+                  cpu: {{ .Values.resources.requests.cpu }}
+                  memory: {{ .Values.resources.requests.memory }}
+                  ephemeral-storage: {{ .Values.resources.requests.ephemeralStorage}}
+                limits:
+                  cpu: {{ .Values.resources.limits.cpu }}
+                  memory: {{ .Values.resources.limits.memory }}
+                  ephemeral-storage: {{ .Values.resources.requests.ephemeralStorage}}
+{{ end }}
+          volumes:
+            - name: config-volume
+              configMap:
+                name: {{ template "fireFlyCollectorConfigMap" .}}
+{{if .Values.argocd.enabled }}
+            - name: argocd-config-volume
+              configMap:
+                name: {{ template "fireFlyArgoConfigMap" .}}
+{{ end }}
+          restartPolicy: OnFailure

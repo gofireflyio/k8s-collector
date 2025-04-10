@@ -1,0 +1,110 @@
+# clusterId is a unique identifier to give the cluster on which the collector
+# runs.
+clusterId: "default"
+overrideUniqueClusterId: false
+
+# schedule is a cron-like value that defines the schedule for the collector's
+# execution. By default, the collector is executed every 15 minutes.
+schedule: "*/15 * * * *"
+
+# accessKey and secretKey are the keypair for authenticating against the
+# Firefly API.
+accessKey: null
+secretKey: null
+
+# to use an existing secret for accessKey and secretKey, set the name of the secret here
+# the existing secret should have accessKey and secretKey keys
+# accessKey and secretKey values are ignored if this is set
+existingFireFlyCredentialsSecret: ""
+existingFireFlyArgocdCredentialsSecret: ""
+# incase the integration does not exist in firefly, the collector will create it
+# if you would like to mark as a production cluster set this to true
+isProduction: false
+
+# image defines the name and pull policy for the OCI image of the collector.
+# By default, the tag defaults to the appVersion value in the chart. You can
+# set a specific tag via the "tag" field.
+image:
+  repository: infralightio/k8s-collector
+  pullPolicy: Always
+
+offBoarderImage:
+  repository: infralightio/k8-collector-offboarder
+  pullPolicy: Always
+  tag: null
+
+argocd:
+  enabled: false
+  insecure: true
+  disablePlaintext: true
+  image:
+    repository: infralightio/self-hosted-redactor
+    pullPolicy: Always
+  secretNameOverride:
+  domain: ""
+  token: ""
+  crawlerLocalPath: "/var/tmp"
+  redactorMirrorBucketName: ""
+  redactorMirrorBucketRegion: "us-east-1"
+  saveToRemoteBucket: false
+  logging:
+    remoteHash: ""
+    appLogPath: "/var/tmp"
+    logFile: "crawler.log"
+  metadata:
+    accountId: ""
+    crawlerId: ""
+    location: {}
+    type: "argocd"
+    active: true
+
+serviceAccount:
+  name: "infralight-service-account"
+  annotations: {}
+
+clusterRole:
+  name: "infralight-role"
+
+resources:
+  requests:
+    cpu: "1.0"
+    memory: "512Mi"
+    ephemeralStorage: "256Mi"
+  limits:
+    cpu: "1.0"
+    memory: "2048Mi"
+    ephemeralStorage: "512Mi"
+
+# apiEndpoint is the URL to Firefly's API. Leave empty unless you have a
+# specific reason to change this.
+apiEndpoint: ""
+
+# loginEndpoint is the URL to Firefly's Auth. Leave empty unless you have a
+# specific reason to change this.
+loginEndpoint: ""
+
+# appApiEndpoint is the URL to Firefly's Application API. Leave empty unless you have a
+# specific reason to change this.
+appApiEndpoint: ""
+
+# fetchEverything is a boolean value indicating whether to allow Firefly to
+# fetch all Kubernetes resource types
+fetchEverything: true
+
+# removeTypes accepts a list of resource types that should be removed from the
+# default list of allowed resources.
+removeTypes: [ ]
+
+# addTypes accepts a list of resource types that should be added to the default
+# list of allowed resources. This is mostly useful for CRDs.
+addTypes: [ ]
+tolerations: []
+nodeSelector: {}
+onBoarder:
+  tolerations: []
+  nodeSelector: {}
+
+# DEPRECATED: collectSecrets is a boolean value indicating whether the collector
+# should collect secrets from the cluster. This value is deprecated in favor of
+# the addTypes value.
+collectSecrets: false
