@@ -12,4 +12,26 @@ entries:
     urls:
     - https://github.com/gofireflyio/k8s-collector/releases/download/firefly-k8s-collector-1.5.3/firefly-k8s-collector-1.5.3.tgz
     version: 1.5.3
+  - apiVersion: v2
+    appVersion: 1.5.2
+    created: "2025-04-10T16:40:38.896058537Z"
+    description: Firefly's Kubernetes Collector
+    digest: 6fd9a54e125f1a1a8021f859bb319ededfcdb560d8a364920826f7f8481e3c73
+    home: https://github.com/gofireflyio/k8s-collector
+    name: firefly-k8s-collector
+    type: application
+    urls:
+    - https://github.com/gofireflyio/k8s-collector/releases/download/firefly-k8s-collector-1.5.3/firefly-k8s-collector-1.5.3.tgz
+    version: 1.5.2
+  - apiVersion: v2
+    appVersion: 1.5.0
+    created: "2025-04-10T16:40:38.896058537Z"
+    description: Firefly's Kubernetes Collector
+    digest: 6fd9a54e125f1a1a8021f859bb319ededfcdb560d8a364920826f7f8481e3c73
+    home: https://github.com/gofireflyio/k8s-collector
+    name: firefly-k8s-collector
+    type: application
+    urls:
+    - https://github.com/gofireflyio/k8s-collector/releases/download/firefly-k8s-collector-1.5.3/firefly-k8s-collector-1.5.3.tgz
+    version: 1.5.0
 generated: "2025-04-10T16:35:38.896063957Z"
