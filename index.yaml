@@ -45,4 +45,15 @@ entries:
     urls:
     - https://github.com/gofireflyio/k8s-collector/releases/download/firefly-k8s-collector-1.5.0/firefly-k8s-collector-1.5.0.tgz
     version: 1.5.0
-generated: "2025-04-14T13:55:46.430972559Z"
+  - apiVersion: v2
+    appVersion: 1.4.9
+    created: "2025-04-14T13:57:13.869322138Z"
+    description: Firefly's Kubernetes Collector
+    digest: a73c0af20eb3f8358c5ebbb997fc07b0d3d98b6200ca36e67361cb9545fb772b
+    home: https://github.com/gofireflyio/k8s-collector
+    name: firefly-k8s-collector
+    type: application
+    urls:
+    - https://github.com/gofireflyio/k8s-collector/releases/download/firefly-k8s-collector-1.4.9/firefly-k8s-collector-1.4.9.tgz
+    version: 1.4.9
+generated: "2025-04-14T13:57:13.869336155Z"
