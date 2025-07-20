@@ -16,6 +16,8 @@ secretKey: null
 # the existing secret should have accessKey and secretKey keys
 # accessKey and secretKey values are ignored if this is set
 existingFireFlyCredentialsSecret: ""
+# to use an existing secret for the argocd access token, set the name of the secret here
+# the existing secret should have IACATHON_ARGOCD_TOKEN key
 existingFireFlyArgocdCredentialsSecret: ""
 # incase the integration does not exist in firefly, the collector will create it
 # if you would like to mark as a production cluster set this to true
