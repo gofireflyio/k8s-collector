@@ -109,4 +109,4 @@ helm install firefly firefly/firefly-k8s-collector \
 
 ## License
 
-This project is distributed under the terms of the [Apache License 2.0](LICENSE).
+This project is distributed under the terms of the [Apache License 2.0](LICENSE)..
