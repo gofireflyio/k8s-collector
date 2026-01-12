@@ -41,7 +41,7 @@ Firefly's Kubernetes Collector requires:
 - [Kubernetes](https://kubernetes.io/) v1.15+
 - [Helm](https://helm.sh/) v3.5.0+
 
-/ To start using the collector, follow these simple steps:
+To start using the collector, follow these simple steps:
 
 1. Use the Kubernetes Integration wizard in the Firefly dashboard to create
    an access keypair for a Kubernetes Cluster.
@@ -109,4 +109,4 @@ helm install firefly firefly/firefly-k8s-collector \
 
 ## License
 
-This project is distributed under the terms of the [Apache License 2.0](LICENSE).
+This project is distributed under the terms of the [Apache License 2.0](LICENSE)..
