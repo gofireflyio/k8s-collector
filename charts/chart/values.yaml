@@ -100,6 +100,24 @@ removeTypes: [ ]
 # addTypes accepts a list of resource types that should be added to the default
 # list of allowed resources. This is mostly useful for CRDs.
 addTypes: [ ]
+# Pod-level security context applied to the collector pod.
+# Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container-level security context applied to each collector container.
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
+
 tolerations: []
 nodeSelector: {}
 onBoarder:
