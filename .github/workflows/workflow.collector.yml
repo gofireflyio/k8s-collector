@@ -51,7 +51,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Get short commit hash
-        uses: benjlevesque/short-sha@v3.0
+        uses: benjlevesque/short-sha@599815c8ee942a9616c92bcfb4f947a3b670ab0b # v3.0
         id: hash
         with:
           length: 8
