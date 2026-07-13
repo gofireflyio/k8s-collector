@@ -34,7 +34,7 @@ on:
         required: true
 jobs:
   build:
-    runs-on: [self-hosted, production]
+    runs-on: gofireflyio-runner-prod-arc-arm
     steps:
       - uses: actions/checkout@v4
 
